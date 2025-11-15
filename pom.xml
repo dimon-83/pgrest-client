@@ -5,6 +5,42 @@
   <version>0.1.0</version>
   <packaging>jar</packaging>
   <name>pgrest-client-spring-boot-starter</name>
+  <description>Spring Boot starter for PostgREST client with Nacos registration and Feign support</description>
+  <url>https://github.com/dimon-83/pgrest-client</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>dimon-83</id>
+      <name>dimon-83</name>
+      <url>https://github.com/dimon-83</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/dimon-83/pgrest-client.git</connection>
+    <developerConnection>scm:git:https://github.com/dimon-83/pgrest-client.git</developerConnection>
+    <url>https://github.com/dimon-83/pgrest-client</url>
+    <tag>HEAD</tag>
+  </scm>
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>https://github.com/dimon-83/pgrest-client/issues</url>
+  </issueManagement>
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
   <properties>
     <java.version>17</java.version>
     <spring.boot.version>3.2.9</spring.boot.version>
@@ -78,6 +114,49 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <configuration>
+          <failOnError>false</failOnError>
+          <source>${java.version}</source>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.13</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
         </configuration>
       </plugin>
       <plugin>

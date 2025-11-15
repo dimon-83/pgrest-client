@@ -1,0 +1,32 @@
+name: Release to Maven Central
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      perform:
+        description: 'Run deploy'
+        required: true
+        default: 'true'
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+          server-id: 'ossrh'
+          server-username: OSSRH_TOKEN_NAME
+          server-password: OSSRH_TOKEN
+      - name: Build and Deploy
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.perform == 'true' }}
+        run: mvn -U -DskipTests=true deploy
+        env:
+          OSSRH_TOKEN_NAME: ${{ secrets.OSSRH_TOKEN_NAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}

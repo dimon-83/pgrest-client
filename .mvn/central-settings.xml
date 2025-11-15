@@ -1,0 +1,34 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <proxies>
+    <proxy>
+      <id>http-proxy</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>127.0.0.1</host>
+      <port>7890</port>
+      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+    </proxy>
+    <proxy>
+      <id>https-proxy</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>127.0.0.1</host>
+      <port>7890</port>
+      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+    </proxy>
+  </proxies>
+  <mirrors>
+    <mirror>
+      <id>aliyun</id>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+  </mirrors>
+  <servers>
+    <server>
+      <id>ossrh</id>
+      <username>sombozone</username>
+      <password>vSfBYV8PaUvnfmye5KtqphxnUYS6b2IHt</password>
+    </server>
+  </servers>
+</settings>

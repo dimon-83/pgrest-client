@@ -22,8 +22,8 @@ jobs:
           java-version: '17'
           cache: 'maven'
           server-id: 'ossrh'
-          server-username: OSSRH_TOKEN_NAME
-          server-password: OSSRH_TOKEN
+          server-username: ${{ secrets.OSSRH_TOKEN_NAME }}
+          server-password: ${{ secrets.OSSRH_TOKEN }}
       - name: Build and Deploy
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.perform == 'true' }}
         run: mvn -U -DskipTests=true deploy

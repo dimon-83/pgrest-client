@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: pgrest-boot-crud
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        group: DEFAULT_GROUP
+
+pgrest:
+  base-url: http://127.0.0.1:3000
+  service-name: postgrest-service
+  group: DEFAULT_GROUP
+  register-to-nacos: true
+  connect-timeout-millis: 5000
+  read-timeout-millis: 10000
+pgrest:
+  gateway:
+    enabled: true
+pgrest:
+  gateway-service-name: pgrest-boot-crud

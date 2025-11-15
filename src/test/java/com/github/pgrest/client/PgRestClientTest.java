@@ -1,0 +1,144 @@
+package com.github.pgrest.client;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpExchange;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class PgRestClientTest {
+    private HttpServer server;
+    private int port;
+
+    @BeforeEach
+    void setup() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        port = server.getAddress().getPort();
+        server.createContext("/users", this::handleUsers);
+        server.start();
+    }
+
+    @AfterEach
+    void teardown() {
+        if (server != null) server.stop(0);
+    }
+
+    private void handleUsers(HttpExchange ex) throws IOException {
+        URI uri = ex.getRequestURI();
+        String query = uri.getRawQuery() == null ? "" : uri.getRawQuery();
+        String method = ex.getRequestMethod();
+
+        List<Map<String,Object>> body = new ArrayList<>();
+        String contentRange = "items */0";
+
+        if ("GET".equalsIgnoreCase(method)) {
+            int limit = getInt(query, "limit", 1);
+            int offset = getInt(query, "offset", 0);
+            for (int i = 0; i < limit; i++) {
+                int id = offset + i + 1;
+                Map<String,Object> row = new HashMap<>();
+                row.put("id", id);
+                row.put("user_name", "user" + id);
+                body.add(row);
+            }
+            int end = offset + limit - 1;
+            contentRange = "items " + offset + "-" + end + "/42";
+        } else if ("POST".equalsIgnoreCase(method)) {
+            Map<String,Object> row = new HashMap<>();
+            row.put("id", 1);
+            row.put("user_name", "alice");
+            body.add(row);
+            contentRange = "items */1";
+        } else if ("PATCH".equalsIgnoreCase(method)) {
+            Map<String,Object> row = new HashMap<>();
+            row.put("id", 1);
+            row.put("user_name", "alice");
+            row.put("status", "active");
+            body.add(row);
+            contentRange = "items */1";
+        } else if ("DELETE".equalsIgnoreCase(method)) {
+            contentRange = "items */3";
+        }
+
+        byte[] json = new ObjectMapper().writeValueAsBytes(body);
+        ex.getResponseHeaders().add("Content-Type", "application/json");
+        ex.getResponseHeaders().add("Content-Range", contentRange);
+        ex.sendResponseHeaders(200, json.length);
+        try (OutputStream os = ex.getResponseBody()) {
+            os.write(json);
+        }
+    }
+
+    private int getInt(String query, String key, int def) {
+        for (String p : query.split("&")) {
+            int i = p.indexOf('=');
+            if (i > 0) {
+                String k = p.substring(0, i);
+                String v = p.substring(i + 1);
+                if (k.equals(key)) {
+                    try { return Integer.parseInt(v); } catch (Exception ignored) {}
+                }
+            }
+        }
+        return def;
+    }
+
+    private PgRestClient newClient() {
+        PgRestProperties props = new PgRestProperties();
+        props.setBaseUrl("http://127.0.0.1:" + port);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+        return new PgRestClient(props, httpClient, mapper);
+    }
+
+    public static class UserVO {
+        public Long id;
+        public String userName;
+    }
+
+    @Test
+    void testList() {
+        PgRestClient client = newClient();
+        List<UserVO> users = client.list("users", new PgQueryBuilder().limit(2), UserVO.class);
+        assertEquals(2, users.size());
+        assertEquals("user1", users.get(0).userName);
+    }
+
+    @Test
+    void testPage() {
+        PgRestClient client = newClient();
+        PageResult<UserVO> page = client.page("users", new PgQueryBuilder().orderAsc("id"), 2, 3, UserVO.class);
+        assertEquals(2, page.getPage());
+        assertEquals(3, page.getSize());
+        assertEquals(42, page.getTotal());
+        assertEquals(3, page.getRecords().size());
+        assertEquals("user4", page.getRecords().get(0).userName);
+    }
+
+    @Test
+    void testGetById() {
+        PgRestClient client = newClient();
+        UserVO one = client.getById("users", 1, UserVO.class);
+        assertNotNull(one);
+        assertEquals(1L, one.id);
+        assertEquals("user1", one.userName);
+    }
+}

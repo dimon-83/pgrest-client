@@ -1,0 +1,2 @@
+com.github.pgrest.client.PgRestAutoConfiguration
+com.github.pgrest.client.feign.PgRestFeignAutoConfiguration

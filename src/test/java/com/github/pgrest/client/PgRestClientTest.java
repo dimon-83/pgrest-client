@@ -32,12 +32,38 @@ public class PgRestClientTest {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         port = server.getAddress().getPort();
         server.createContext("/users", this::handleUsers);
+        server.createContext("/rpc/echo", this::handleRpcEcho);
+        server.createContext("/rpc/top_orders", this::handleRpcTopOrders);
         server.start();
     }
 
     @AfterEach
     void teardown() {
         if (server != null) server.stop(0);
+    }
+
+    private void handleRpcEcho(HttpExchange ex) throws IOException {
+        Map<String,Object> row = new HashMap<>();
+        row.put("id", 1);
+        row.put("user_name", "alice");
+        byte[] json = new ObjectMapper().writeValueAsBytes(row);
+        ex.getResponseHeaders().add("Content-Type", "application/json");
+        ex.sendResponseHeaders(200, json.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(json); }
+    }
+
+    private void handleRpcTopOrders(HttpExchange ex) throws IOException {
+        List<Map<String,Object>> body = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            Map<String,Object> row = new HashMap<>();
+            row.put("id", i + 1);
+            row.put("user_name", "user" + (i + 1));
+            body.add(row);
+        }
+        byte[] json = new ObjectMapper().writeValueAsBytes(body);
+        ex.getResponseHeaders().add("Content-Type", "application/json");
+        ex.sendResponseHeaders(200, json.length);
+        try (OutputStream os = ex.getResponseBody()) { os.write(json); }
     }
 
     private void handleUsers(HttpExchange ex) throws IOException {
@@ -140,5 +166,22 @@ public class PgRestClientTest {
         assertNotNull(one);
         assertEquals(1L, one.id);
         assertEquals("user1", one.userName);
+    }
+
+    @Test
+    void testRpcForObject() {
+        PgRestClient client = newClient();
+        UserVO vo = client.rpcForObject("echo", Map.of("any", "param"), UserVO.class);
+        assertNotNull(vo);
+        assertEquals(1L, vo.id);
+        assertEquals("alice", vo.userName);
+    }
+
+    @Test
+    void testRpcForList() {
+        PgRestClient client = newClient();
+        List<UserVO> list = client.rpcForList("top_orders", Map.of("limit_arg", 2), UserVO.class);
+        assertEquals(2, list.size());
+        assertEquals("user1", list.get(0).userName);
     }
 }

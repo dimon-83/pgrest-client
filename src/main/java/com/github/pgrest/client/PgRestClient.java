@@ -140,6 +140,74 @@ public class PgRestClient {
         }
     }
 
+    public <T> T rpcForObject(String function, Object payload, Class<T> type) {
+        String url = properties.getBaseUrl() + "/rpc/" + function;
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("Prefer", "count=exact")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return objectMapper.readValue(response.body(), type);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> T rpcForObject(String function, Object payload, PgQueryBuilder builder, Class<T> type) {
+        String url = properties.getBaseUrl() + "/rpc/" + function + builder.build();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("Prefer", "count=exact")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return objectMapper.readValue(response.body(), type);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> List<T> rpcForList(String function, Object payload, Class<T> type) {
+        String url = properties.getBaseUrl() + "/rpc/" + function;
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("Prefer", "count=exact")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T> List<T> rpcForList(String function, Object payload, PgQueryBuilder builder, Class<T> type) {
+        String url = properties.getBaseUrl() + "/rpc/" + function + builder.build();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("Prefer", "count=exact")
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, Class<T> type) {
         String url = properties.getBaseUrl() + "/" + resource + builder.build();
         try {

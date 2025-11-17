@@ -13,6 +13,7 @@ jobs:
       SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
       SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PRIVATE_KEY_B64: ${{ secrets.GPG_PRIVATE_KEY_B64 }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       GPG_KEYID: DF3A3908F0D901C00E38B49F676902DE0EB424FF
@@ -32,6 +33,14 @@ jobs:
           printf 'allow-loopback-pinentry\n' > "$GNUPGHOME/gpg-agent.conf"
           chmod 600 "$GNUPGHOME/gpg.conf" "$GNUPGHOME/gpg-agent.conf"
           gpgconf --homedir "$GNUPGHOME" --kill gpg-agent || true
+          if [ -z "${GPG_PRIVATE_KEY:-}" ] && [ -n "${GPG_PRIVATE_KEY_B64:-}" ]; then
+            GPG_PRIVATE_KEY="${GPG_PRIVATE_KEY_B64}"
+          fi
+          echo "GPG_PRIVATE_KEY env length: ${#GPG_PRIVATE_KEY}"
+          if [ -z "${GPG_PRIVATE_KEY:-}" ]; then
+            echo "ERROR: GPG_PRIVATE_KEY is empty. Set repository/org Secret GPG_PRIVATE_KEY (ASCII armored) or GPG_PRIVATE_KEY_B64 (base64 of private key)." >&2
+            exit 2
+          fi
           if echo "$GPG_PRIVATE_KEY" | grep -q "BEGIN PGP PRIVATE KEY BLOCK"; then
             printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | sed $'s/\\n/\n/g' > "$GNUPGHOME/import.asc"
           else

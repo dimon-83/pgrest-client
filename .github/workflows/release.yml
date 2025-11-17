@@ -27,6 +27,13 @@ jobs:
       - name: Import GPG key
         run: |
           set -euo pipefail
+          echo "event=$GITHUB_EVENT_NAME ref=$GITHUB_REF"
+          echo "has GPG_PRIVATE_KEY: $([ -n \"${GPG_PRIVATE_KEY:-}\" ] && echo yes || echo no)"
+          echo "len GPG_PRIVATE_KEY: ${#GPG_PRIVATE_KEY}"
+          echo "has GPG_PRIVATE_KEY_B64: $([ -n \"${GPG_PRIVATE_KEY_B64:-}\" ] && echo yes || echo no)"
+          echo "len GPG_PRIVATE_KEY_B64: ${#GPG_PRIVATE_KEY_B64}"
+          echo "::add-mask::${GPG_PRIVATE_KEY}"
+          echo "::add-mask::${GPG_PRIVATE_KEY_B64}"
           export GNUPGHOME="$RUNNER_TEMP/gnupg"
           install -d -m 700 "$GNUPGHOME"
           printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
@@ -42,9 +49,9 @@ jobs:
             exit 2
           fi
           if echo "$GPG_PRIVATE_KEY" | grep -q "BEGIN PGP PRIVATE KEY BLOCK"; then
-            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | sed $'s/\\n/\n/g' > "$GNUPGHOME/import.asc"
+            printf '%b' "$GPG_PRIVATE_KEY" | tr -d '\r' > "$GNUPGHOME/import.asc"
           else
-            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | base64 -d > "$GNUPGHOME/import.asc"
+            printf '%s' "$GPG_PRIVATE_KEY" | tr -d '\r' | base64 -d > "$GNUPGHOME/import.asc"
           fi
           stat -c '%n %s' "$GNUPGHOME/import.asc"
           head -n 1 "$GNUPGHOME/import.asc"; tail -n 1 "$GNUPGHOME/import.asc"

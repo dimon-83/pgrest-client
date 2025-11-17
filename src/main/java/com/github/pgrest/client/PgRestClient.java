@@ -15,6 +15,7 @@ public class PgRestClient {
     private final PgRestProperties properties;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private java.util.function.UnaryOperator<Map<String,Object>> claimsHandler;
 
     public PgRestClient(PgRestProperties properties, HttpClient httpClient, ObjectMapper objectMapper) {
         this.properties = properties;
@@ -104,6 +105,55 @@ public class PgRestClient {
             }
         }
         return 0;
+    }
+
+  
+
+    public String issueJwt(Map<String,Object> claims) {
+        Map<String,Object> payload = new java.util.HashMap<>();
+        if (claims != null) payload.putAll(claims);
+        if (claimsHandler != null) payload = claimsHandler.apply(payload);
+        else payload = java.util.function.UnaryOperator.<Map<String,Object>>identity()
+                .andThen(c -> { c.put("user", "test"); return c; })
+                .apply(payload);
+        String secret = properties.getSecret();
+        if (secret == null || secret.isBlank()) secret = properties.getJwtSecret();
+        if (secret == null || secret.isBlank()) throw new IllegalStateException("jwt-secret is missing");
+        secret = secret.trim();
+        byte[] key = secret.startsWith("@") ? java.util.Base64.getDecoder().decode(secret.substring(1)) : secret.getBytes(StandardCharsets.UTF_8);
+        if (key.length < 32) throw new IllegalStateException("jwt-secret must be at least 256 bits");
+        long nowSec = java.time.Instant.now().getEpochSecond();
+        long expSec = nowSec + Math.max(1, properties.getJwtTtlSeconds());
+        payload.put("iat", nowSec);
+        payload.put("exp", expSec);
+        String role = properties.getDbRole();
+        if (role != null && !role.isBlank()) payload.put("role", role);
+        String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
+        String payloadJson;
+        try {
+            payloadJson = objectMapper.writeValueAsString(payload);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        java.util.Base64.Encoder enc = java.util.Base64.getUrlEncoder().withoutPadding();
+        String headerB64 = enc.encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = enc.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String signingInput = headerB64 + "." + payloadB64;
+        byte[] sig;
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            javax.crypto.spec.SecretKeySpec sk = new javax.crypto.spec.SecretKeySpec(key, "HmacSHA256");
+            mac.init(sk);
+            sig = mac.doFinal(signingInput.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        String sigB64 = enc.encodeToString(sig);
+        return signingInput + "." + sigB64;
+    }
+
+    public void setClaimsHandler(java.util.function.UnaryOperator<Map<String,Object>> claimsHandler) {
+        this.claimsHandler = claimsHandler;
     }
 
     public <T> List<T> insert(String resource, Object payload, Class<T> type) {

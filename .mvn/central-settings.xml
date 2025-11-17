@@ -27,8 +27,13 @@
   <servers>
     <server>
       <id>ossrh</id>
-      <username>sombozone</username>
-      <password>vSfBYV8PaUvnfmye5KtqphxnUYS6b2IHt</password>
+      <username>nQsR8R</username>
+      <password>hsJcxfeDrwr7FsNs9IvjQaG7qGCIl1MPc</password>
+    </server>
+    <server>
+      <id>sonatype-nexus-snapshots</id>
+      <username>nQsR8R</username>
+      <password>hsJcxfeDrwr7FsNs9IvjQaG7qGCIl1MPc</password>
     </server>
   </servers>
 </settings>

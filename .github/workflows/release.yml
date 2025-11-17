@@ -32,11 +32,13 @@ jobs:
           chmod 600 ~/.gnupg/gpg.conf ~/.gnupg/gpg-agent.conf || true
           gpgconf --kill gpg-agent
           if echo "$GPG_PRIVATE_KEY" | grep -q "BEGIN PGP PRIVATE KEY BLOCK"; then
-            echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' > ~/.gnupg/import.asc
           else
-            echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | base64 -d > ~/.gnupg/import.asc
           fi
+          gpg --batch --import ~/.gnupg/import.asc
           gpg --list-secret-keys --keyid-format LONG
+          gpg --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" -u "$GPG_KEYID" --sign -a </dev/null >/dev/null
       - name: Deploy to Central
         run: |
           mvn -B -s .mvn/settings.xml -DskipTests -Dgpg.keyname="$GPG_KEYID" -Dgpg.passphrase="$GPG_PASSPHRASE" deploy

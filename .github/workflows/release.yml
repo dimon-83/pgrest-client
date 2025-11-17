@@ -26,11 +26,17 @@ jobs:
       - name: Import GPG key
         run: |
           mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
           printf 'pinentry-mode loopback\n' >> ~/.gnupg/gpg.conf
           printf 'allow-loopback-pinentry\n' >> ~/.gnupg/gpg-agent.conf
+          chmod 600 ~/.gnupg/gpg.conf ~/.gnupg/gpg-agent.conf || true
           gpgconf --kill gpg-agent
-          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          if echo "$GPG_PRIVATE_KEY" | grep -q "BEGIN PGP PRIVATE KEY BLOCK"; then
+            echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          else
+            echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+          fi
           gpg --list-secret-keys --keyid-format LONG
       - name: Deploy to Central
         run: |
-          mvn -B -s .mvn/settings.xml -DskipTests -Dgpg.keyname="$GPG_KEYID" deploy
+          mvn -B -s .mvn/settings.xml -DskipTests -Dgpg.keyname="$GPG_KEYID" -Dgpg.passphrase="$GPG_PASSPHRASE" deploy

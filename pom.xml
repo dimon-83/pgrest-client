@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-client-spring-boot-starter</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <packaging>jar</packaging>
   <name>pgrest-client-spring-boot-starter</name>
   <description>Spring Boot starter for PostgREST client with Nacos registration and Feign support</description>
@@ -160,9 +160,8 @@
         <artifactId>maven-gpg-plugin</artifactId>
         <version>3.2.5</version>
         <configuration>
-          <executable>${env.GPG_EXECUTABLE}</executable>
+          <executable>gpg</executable>
           <useAgent>false</useAgent>
-          <passphrase>${env.GPG_PASSPHRASE}</passphrase>
           <gpgArguments>
             <arg>--pinentry-mode</arg>
             <arg>loopback</arg>
@@ -170,7 +169,6 @@
             <arg>--yes</arg>
             <arg>--no-tty</arg>
           </gpgArguments>
-          <passphraseServerId>gpg</passphraseServerId>
         </configuration>
         <executions>
           <execution>

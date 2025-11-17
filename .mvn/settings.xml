@@ -1,26 +1,17 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <!-- 包含central-settings.xml中的配置 -->
-  <include>central-settings.xml</include>
-  
-  <!-- <proxies>
-    <proxy>
-      <id>http-proxy</id>
-      <active>true</active>
-      <protocol>http</protocol>
-      <host>127.0.0.1</host>
-      <port>7890</port>
-      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
-    </proxy>
-    <proxy>
-      <id>https-proxy</id>
-      <active>true</active>
-      <protocol>https</protocol>
-      <host>127.0.0.1</host>
-      <port>7890</port>
-      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
-    </proxy>
-  </proxies> -->
-  
+  <servers>
+    <server>
+      <id>central</id>
+      <username>${env.SONATYPE_USERNAME}</username>
+      <password>${env.SONATYPE_PASSWORD}</password>
+    </server>
+    <server>
+      <id>ossrh</id>
+      <username>${env.SONATYPE_CONTENT_TOKEN_NAME}</username>
+      <password>${env.SONATYPE_CONTENT_TOKEN}</password>
+    </server>
+  </servers>
+
   <mirrors>
     <mirror>
       <id>aliyun</id>
@@ -28,7 +19,7 @@
       <url>https://maven.aliyun.com/repository/public</url>
     </mirror>
   </mirrors>
-  
+
   <profiles>
     <profile>
       <id>default</id>
@@ -40,7 +31,7 @@
       </repositories>
     </profile>
   </profiles>
-  
+
   <activeProfiles>
     <activeProfile>default</activeProfile>
   </activeProfiles>

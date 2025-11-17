@@ -15,7 +15,7 @@ jobs:
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      GPG_KEYID: 135C4B65138433D6BCC350A03BEAEA0ADD633651
+      GPG_KEYID: DF3A3908F0D901C00E38B49F676902DE0EB424FF
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

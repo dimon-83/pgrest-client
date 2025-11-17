@@ -10,12 +10,14 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class PgRestClient {
     private final PgRestProperties properties;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private java.util.function.UnaryOperator<Map<String,Object>> claimsHandler;
+    private Supplier<String> authTokenSupplier;
 
     public PgRestClient(PgRestProperties properties, HttpClient httpClient, ObjectMapper objectMapper) {
         this.properties = properties;
@@ -25,11 +27,12 @@ public class PgRestClient {
 
     public <T> List<T> list(String resource, PgQueryBuilder builder, Class<T> type) {
         String url = properties.getBaseUrl() + "/" + resource + builder.build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest.Builder rb = HttpRequest.newBuilder(URI.create(url))
                 .header("Accept", "application/json")
                 .header("Prefer", "count=exact")
-                .GET()
-                .build();
+                .GET();
+        addAuth(rb);
+        HttpRequest request = rb.build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
@@ -42,11 +45,12 @@ public class PgRestClient {
         int offset = (page - 1) * size;
         PgQueryBuilder qb = builder.copy().limit(size).offset(offset);
         String url = properties.getBaseUrl() + "/" + resource + qb.build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest.Builder rb2 = HttpRequest.newBuilder(URI.create(url))
                 .header("Accept", "application/json")
                 .header("Prefer", "count=exact")
-                .GET()
-                .build();
+                .GET();
+        addAuth(rb2);
+        HttpRequest request = rb2.build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             List<T> list = objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
@@ -60,11 +64,12 @@ public class PgRestClient {
 
     public Map<String, Object> get(String resource, PgQueryBuilder builder) {
         String url = properties.getBaseUrl() + "/" + resource + builder.build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest.Builder rb3 = HttpRequest.newBuilder(URI.create(url))
                 .header("Accept", "application/json")
                 .header("Prefer", "count=exact")
-                .GET()
-                .build();
+                .GET();
+        addAuth(rb3);
+        HttpRequest request = rb3.build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>(){});
@@ -80,11 +85,12 @@ public class PgRestClient {
     public <T> T getById(String resource, String idColumn, Object id, PgQueryBuilder builder, Class<T> type) {
         PgQueryBuilder qb = builder.copy().eq(idColumn, id).limit(1);
         String url = properties.getBaseUrl() + "/" + resource + qb.build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest.Builder rb4 = HttpRequest.newBuilder(URI.create(url))
                 .header("Accept", "application/json")
                 .header("Prefer", "count=exact")
-                .GET()
-                .build();
+                .GET();
+        addAuth(rb4);
+        HttpRequest request = rb4.build();
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             List<T> list = objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
@@ -156,16 +162,25 @@ public class PgRestClient {
         this.claimsHandler = claimsHandler;
     }
 
+    public void setAuthTokenSupplier(Supplier<String> supplier) {
+        this.authTokenSupplier = supplier;
+    }
+
+    public void setStaticAuthToken(String token) {
+        this.authTokenSupplier = () -> token;
+    }
+
     public <T> List<T> insert(String resource, Object payload, Class<T> type) {
         String url = properties.getBaseUrl() + "/" + resource;
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb5 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "return=representation,count=exact")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb5);
+            HttpRequest request = rb5.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
         } catch (Exception e) {
@@ -177,12 +192,13 @@ public class PgRestClient {
         String url = properties.getBaseUrl() + "/" + resource + builder.build();
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb6 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "return=representation,count=exact")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb6);
+            HttpRequest request = rb6.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
         } catch (Exception e) {
@@ -194,12 +210,13 @@ public class PgRestClient {
         String url = properties.getBaseUrl() + "/rpc/" + function;
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb7 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "count=exact")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb7);
+            HttpRequest request = rb7.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), type);
         } catch (Exception e) {
@@ -211,12 +228,13 @@ public class PgRestClient {
         String url = properties.getBaseUrl() + "/rpc/" + function + builder.build();
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb8 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "count=exact")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb8);
+            HttpRequest request = rb8.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), type);
         } catch (Exception e) {
@@ -228,12 +246,13 @@ public class PgRestClient {
         String url = properties.getBaseUrl() + "/rpc/" + function;
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb9 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "count=exact")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb9);
+            HttpRequest request = rb9.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
         } catch (Exception e) {
@@ -245,12 +264,13 @@ public class PgRestClient {
         String url = properties.getBaseUrl() + "/rpc/" + function + builder.build();
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb10 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "count=exact")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb10);
+            HttpRequest request = rb10.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
         } catch (Exception e) {
@@ -262,12 +282,13 @@ public class PgRestClient {
         String url = properties.getBaseUrl() + "/" + resource + builder.build();
         try {
             String json = objectMapper.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+            HttpRequest.Builder rb11 = HttpRequest.newBuilder(URI.create(url))
                     .header("Accept", "application/json")
                     .header("Content-Type", "application/json")
                     .header("Prefer", "return=representation,count=exact")
-                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8));
+            addAuth(rb11);
+            HttpRequest request = rb11.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             return objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
         } catch (Exception e) {
@@ -277,11 +298,13 @@ public class PgRestClient {
 
     public int delete(String resource, PgQueryBuilder builder) {
         String url = properties.getBaseUrl() + "/" + resource + builder.build();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest.Builder rb12 = HttpRequest.newBuilder(URI.create(url))
                 .header("Accept", "application/json")
                 .header("Prefer", "count=exact")
-                .DELETE()
-                .build();
+                .DELETE();
+        addAuth(rb12);
+        HttpRequest request = rb12.build();
+
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             String contentRange = response.headers().firstValue("Content-Range").orElse("items */0");
@@ -289,6 +312,22 @@ public class PgRestClient {
             return (int) total;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void addAuth(HttpRequest.Builder rb) {
+        if (!properties.isAuthEnabled()) return;
+        String token = null;
+        if (authTokenSupplier != null) {
+            token = authTokenSupplier.get();
+        } else {
+            String s = properties.getSecret();
+            String js = properties.getJwtSecret();
+            if ((s == null || s.isBlank()) && (js == null || js.isBlank())) return;
+            token = issueJwt(null);
+        }
+        if (token != null && !token.isBlank()) {
+            rb.header("Authorization", "Bearer " + token);
         }
     }
 }

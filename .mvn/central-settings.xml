@@ -1,5 +1,5 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <proxies>
+  <!-- <proxies>
     <proxy>
       <id>http-proxy</id>
       <active>true</active>
@@ -16,7 +16,7 @@
       <port>7890</port>
       <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
     </proxy>
-  </proxies>
+  </proxies> -->
   <mirrors>
     <mirror>
       <id>aliyun</id>
@@ -27,13 +27,13 @@
   <servers>
     <server>
       <id>ossrh</id>
-      <username>nQsR8R</username>
-      <password>hsJcxfeDrwr7FsNs9IvjQaG7qGCIl1MPc</password>
+      <username>h5F1eV</username>
+      <password>8rgUUtjT9yrou85oKcQB9IOS1Jou4Orbb</password>
     </server>
     <server>
       <id>sonatype-nexus-snapshots</id>
-      <username>nQsR8R</username>
-      <password>hsJcxfeDrwr7FsNs9IvjQaG7qGCIl1MPc</password>
+      <username>h5F1eV</username>
+      <password>8rgUUtjT9yrou85oKcQB9IOS1Jou4Orbb</password>
     </server>
   </servers>
 </settings>

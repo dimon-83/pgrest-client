@@ -1,5 +1,8 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-  <proxies>
+  <!-- 包含central-settings.xml中的配置 -->
+  <include>central-settings.xml</include>
+  
+  <!-- <proxies>
     <proxy>
       <id>http-proxy</id>
       <active>true</active>
@@ -16,7 +19,8 @@
       <port>7890</port>
       <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
     </proxy>
-  </proxies>
+  </proxies> -->
+  
   <mirrors>
     <mirror>
       <id>aliyun</id>
@@ -24,6 +28,7 @@
       <url>https://maven.aliyun.com/repository/public</url>
     </mirror>
   </mirrors>
+  
   <profiles>
     <profile>
       <id>default</id>
@@ -35,6 +40,7 @@
       </repositories>
     </profile>
   </profiles>
+  
   <activeProfiles>
     <activeProfile>default</activeProfile>
   </activeProfiles>

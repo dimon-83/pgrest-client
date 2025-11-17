@@ -25,20 +25,24 @@ jobs:
           cache: 'maven'
       - name: Import GPG key
         run: |
-          mkdir -p ~/.gnupg
-          chmod 700 ~/.gnupg
-          printf 'pinentry-mode loopback\n' >> ~/.gnupg/gpg.conf
-          printf 'allow-loopback-pinentry\n' >> ~/.gnupg/gpg-agent.conf
-          chmod 600 ~/.gnupg/gpg.conf ~/.gnupg/gpg-agent.conf || true
-          gpgconf --kill gpg-agent
+          set -euo pipefail
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          install -d -m 700 "$GNUPGHOME"
+          printf 'pinentry-mode loopback\n' > "$GNUPGHOME/gpg.conf"
+          printf 'allow-loopback-pinentry\n' > "$GNUPGHOME/gpg-agent.conf"
+          chmod 600 "$GNUPGHOME/gpg.conf" "$GNUPGHOME/gpg-agent.conf"
+          gpgconf --homedir "$GNUPGHOME" --kill gpg-agent || true
           if echo "$GPG_PRIVATE_KEY" | grep -q "BEGIN PGP PRIVATE KEY BLOCK"; then
-            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' > ~/.gnupg/import.asc
+            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | sed $'s/\\n/\n/g' > "$GNUPGHOME/import.asc"
           else
-            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | base64 -d > ~/.gnupg/import.asc
+            printf "%s" "$GPG_PRIVATE_KEY" | tr -d '\r' | base64 -d > "$GNUPGHOME/import.asc"
           fi
-          gpg --batch --import ~/.gnupg/import.asc
-          gpg --list-secret-keys --keyid-format LONG
-          gpg --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" -u "$GPG_KEYID" --sign -a </dev/null >/dev/null
+          stat -c '%n %s' "$GNUPGHOME/import.asc"
+          head -n 1 "$GNUPGHOME/import.asc"; tail -n 1 "$GNUPGHOME/import.asc"
+          gpg --homedir "$GNUPGHOME" --batch --import "$GNUPGHOME/import.asc"
+          gpg --homedir "$GNUPGHOME" --list-secret-keys --keyid-format LONG
+          echo "GNUPGHOME=$GNUPGHOME" >> $GITHUB_ENV
+          gpg --homedir "$GNUPGHOME" --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" -u "$GPG_KEYID" --sign -a </dev/null >/dev/null
       - name: Deploy to Central
         run: |
           mvn -B -s .mvn/settings.xml -DskipTests -Dgpg.keyname="$GPG_KEYID" -Dgpg.passphrase="$GPG_PASSPHRASE" deploy

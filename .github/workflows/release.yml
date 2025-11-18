@@ -61,4 +61,9 @@ jobs:
           gpg --homedir "$GNUPGHOME" --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" -u "$GPG_KEYID" --sign -a </dev/null >/dev/null
       - name: Deploy to Central
         run: |
-          mvn -B -s .mvn/settings.xml -DskipTests -Dgpg.keyname="$GPG_KEYID" -Dgpg.passphrase="$GPG_PASSPHRASE" deploy
+          mvn -B -s .mvn/settings.xml \
+            -P signing \
+            -DskipTests \
+            -Dgpg.keyname="$GPG_KEYID" \
+            -Dgpg.passphrase="$GPG_PASSPHRASE" \
+            -pl pgrest-client-core,pgrest-spring-boot-starter -am deploy

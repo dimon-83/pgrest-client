@@ -16,7 +16,7 @@ PostgREST Java client and Spring Boot Starter. The project has been split into m
 <dependency>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-client-core</artifactId>
-  <version>0.1.3</version>
+  <version>0.1.4</version>
 </dependency>
 ```
 

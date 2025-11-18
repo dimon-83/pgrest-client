@@ -6,6 +6,8 @@
     <version>0.1.4</version>
   </parent>
   <artifactId>pgrest-spring-boot-starter</artifactId>
+  <name>PostgREST Spring Boot Starter</name>
+  <description>Spring Boot starter for PostgREST Java client with auto-configuration and optional Feign/Gateway</description>
   <packaging>jar</packaging>
   <properties>
     <java.version>17</java.version>

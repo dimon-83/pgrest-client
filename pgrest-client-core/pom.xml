@@ -6,6 +6,8 @@
     <version>0.1.4</version>
   </parent>
   <artifactId>pgrest-client-core</artifactId>
+  <name>PostgREST Java Client Core</name>
+  <description>Core Java client for PostgREST with HTTP abstraction and JWT support</description>
   <packaging>jar</packaging>
   <properties>
     <java.version>17</java.version>

@@ -7,24 +7,24 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "${pgrest.gateway-service-name}", contextId = "${pgrest.gateway-service-name}-pgrestClient", configuration = PgRestFeignConfig.class)
-public interface PgRestGatewayFeignClient {
-    @GetMapping("/api/pg/{resource}")
+@FeignClient(name = "${pgrest.service-name}", contextId = "${pgrest.service-name}-pgrestClient", configuration = PgRestFeignConfig.class)
+public interface PgRestDirectFeignClient {
+    @GetMapping("/{resource}")
     ResponseEntity<List<Map<String, Object>>> list(@PathVariable("resource") String resource, @RequestParam Map<String, String> query);
 
-    @GetMapping("/api/pg/{resource}")
+    @GetMapping("/{resource}")
     ResponseEntity<List<Map<String, Object>>> list(
             @PathVariable("resource") String resource,
             @RequestParam Map<String, String> query,
             @RequestHeader("Range") String range,
             @RequestHeader(value = "Range-Unit", required = false, defaultValue = "items") String rangeUnit);
 
-    @PostMapping("/api/pg/{resource}")
+    @PostMapping("/{resource}")
     ResponseEntity<List<Map<String, Object>>> insert(@PathVariable("resource") String resource, @RequestBody Object payload, @RequestParam Map<String, String> query);
 
-    @PatchMapping("/api/pg/{resource}")
+    @PatchMapping("/{resource}")
     ResponseEntity<List<Map<String, Object>>> update(@PathVariable("resource") String resource, @RequestBody Object payload, @RequestParam Map<String, String> query);
 
-    @DeleteMapping("/api/pg/{resource}")
-    ResponseEntity<Integer> delete(@PathVariable("resource") String resource, @RequestParam Map<String, String> query);
+    @DeleteMapping("/{resource}")
+    ResponseEntity<Void> delete(@PathVariable("resource") String resource, @RequestParam Map<String, String> query);
 }

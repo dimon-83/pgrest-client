@@ -7,11 +7,11 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 
 public class PgRestTypedClient {
-    private final PgRestGatewayFeignClient gateway;
-    private final PgRestFeignClient direct;
+    private final PgRestFeignClient gateway;
+    private final PgRestDirectFeignClient direct;
     private final ObjectMapper objectMapper;
 
-    public PgRestTypedClient(PgRestGatewayFeignClient gateway, PgRestFeignClient direct, ObjectMapper objectMapper) {
+    public PgRestTypedClient(PgRestFeignClient gateway, PgRestDirectFeignClient direct, ObjectMapper objectMapper) {
         this.gateway = gateway;
         this.direct = direct;
         this.objectMapper = objectMapper;

@@ -8,7 +8,6 @@ public class PgRestProperties {
     private int connectTimeoutMillis = 5000;
     private int readTimeoutMillis = 10000;
     private String serviceName;
-    private String gatewayServiceName;
     private String dbRole;
     private String jwtSecret;
     private String secret;
@@ -23,8 +22,6 @@ public class PgRestProperties {
     public void setReadTimeoutMillis(int readTimeoutMillis) { this.readTimeoutMillis = readTimeoutMillis; }
     public String getServiceName() { return serviceName; }
     public void setServiceName(String serviceName) { this.serviceName = serviceName; }
-    public String getGatewayServiceName() { return gatewayServiceName; }
-    public void setGatewayServiceName(String gatewayServiceName) { this.gatewayServiceName = gatewayServiceName; }
     public String getDbRole() { return dbRole; }
     public void setDbRole(String dbRole) { this.dbRole = dbRole; }
     public String getJwtSecret() { return jwtSecret; }

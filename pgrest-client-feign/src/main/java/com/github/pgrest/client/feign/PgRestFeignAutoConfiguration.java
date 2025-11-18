@@ -12,8 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @EnableFeignClients(basePackageClasses = PgRestFeignClient.class)
 public class PgRestFeignAutoConfiguration {
     @Bean
-    public PgRestTypedClient pgRestTypedClient(@Autowired(required = false) PgRestGatewayFeignClient gateway,
-                                               @Autowired(required = false) PgRestFeignClient direct,
+    public PgRestTypedClient pgRestTypedClient(@Autowired(required = false) PgRestFeignClient gateway,
+                                               @Autowired(required = false) PgRestDirectFeignClient direct,
                                                ObjectMapper pgRestFeignObjectMapper) {
         return new PgRestTypedClient(gateway, direct, pgRestFeignObjectMapper);
     }

@@ -1,0 +1,8 @@
+com\github\pgrest\client\gateway\PgRestGatewayController.class
+com\github\pgrest\client\PgRestAutoConfiguration.class
+com\github\pgrest\client\feign\PgRestGatewayFeignClient.class
+com\github\pgrest\client\feign\PgRestFeignAutoConfiguration.class
+com\github\pgrest\client\feign\PgRestFeignClient.class
+com\github\pgrest\client\PgRestProperties.class
+com\github\pgrest\client\feign\PgRestTypedClient.class
+com\github\pgrest\client\feign\PgRestFeignConfig.class

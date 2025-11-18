@@ -10,9 +10,10 @@ spring:
 
 pgrest:
   base-url: http://127.0.0.1:3000
-  service-name: postgrest-service
-  group: DEFAULT_GROUP
-  register-to-nacos: true
+  db-role: api_user
+  secret: reallyreallyreallyreallyverysafe
+  jwt-ttl-seconds: 3600
+  auth-enabled: true
   connect-timeout-millis: 5000
   read-timeout-millis: 10000
 pgrest:

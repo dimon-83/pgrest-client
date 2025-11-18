@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.github.pgrest.client.PageResult;
 import com.github.pgrest.client.PgQueryBuilder;
 import com.github.pgrest.client.PgRestClient;
-import com.github.pgrest.client.PgRestProperties;
+import com.github.pgrest.client.PgClientConfig;
+import com.github.pgrest.client.http.JdkHttpExecutor;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -14,15 +15,15 @@ import java.util.Map;
 
 public class DirectExampleMain {
     public static void main(String[] args) {
-        PgRestProperties props = new PgRestProperties();
-        props.setBaseUrl("http://10.38.245.92:3007");
-        props.setSecret("reallyreallyreallyreallyverysafe");
-        props.setJwtTtlSeconds(3600);
-        props.setDbRole("api_user");
+        PgClientConfig cfg = new PgClientConfig();
+        cfg.setBaseUrl("http://10.38.245.92:3007");
+        cfg.setSecret("reallyreallyreallyreallyverysafe");
+        cfg.setJwtTtlSeconds(3600);
+        cfg.setDbRole("api_user");
         ObjectMapper mapper = new ObjectMapper();
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-        PgRestClient client = new PgRestClient(props, http, mapper);
+        PgRestClient client = new PgRestClient(cfg, new JdkHttpExecutor(http), mapper);
 
         PgQueryBuilder qb = new PgQueryBuilder().select("id,park_code,equip_name,tenant_id").orderDesc("id").limit(5);
         List<Map> rows = client.list("gate_info", qb, Map.class);

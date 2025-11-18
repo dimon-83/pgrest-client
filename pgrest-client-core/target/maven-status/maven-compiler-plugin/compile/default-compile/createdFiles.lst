@@ -1,0 +1,10 @@
+com\github\pgrest\client\http\HttpResponseData.class
+com\github\pgrest\client\PgRestClient$1.class
+com\github\pgrest\client\http\OkHttpExecutor.class
+com\github\pgrest\client\PageResult.class
+com\github\pgrest\client\http\JdkHttpExecutor.class
+com\github\pgrest\client\PgRestClient.class
+com\github\pgrest\client\http\HttpExecutor.class
+com\github\pgrest\client\PgClientConfig.class
+com\github\pgrest\client\PgQueryBuilder.class
+com\github\pgrest\client\http\HttpRequestData.class

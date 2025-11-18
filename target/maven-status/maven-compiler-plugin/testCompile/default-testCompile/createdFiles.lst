@@ -1,9 +1,0 @@
-com\github\pgrest\client\PgRestClientTest$UserVO.class
-com\github\pgrest\client\feign\PgRestTypedClientTest$StubGateway.class
-com\github\pgrest\client\feign\PgRestFeignIT$LBConfig.class
-com\github\pgrest\client\feign\PgRestTypedClientTest.class
-com\github\pgrest\client\feign\PgRestTypedClientTest$StubDirect.class
-com\github\pgrest\client\feign\PgRestFeignIT$StaticSupplier.class
-com\github\pgrest\client\PgRestClientTest.class
-com\github\pgrest\client\feign\PgRestTypedClientTest$UserVO.class
-com\github\pgrest\client\feign\PgRestFeignIT.class

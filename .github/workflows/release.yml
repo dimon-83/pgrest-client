@@ -66,4 +66,4 @@ jobs:
             -DskipTests \
             -Dgpg.keyname="$GPG_KEYID" \
             -Dgpg.passphrase="$GPG_PASSPHRASE" \
-            -pl pgrest-client-core,pgrest-spring-boot-starter -am deploy
+            -pl pgrest-client-core,pgrest-client-starter -am deploy

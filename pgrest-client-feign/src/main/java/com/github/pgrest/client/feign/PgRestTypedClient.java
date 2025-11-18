@@ -55,24 +55,34 @@ public class PgRestTypedClient {
     }
 
     public <T> PageResult<T> page(String resource, Map<String,String> query, int page, int size, Class<T> type) {
-        int offset = (page - 1) * size;
-        java.util.Map<String,String> q = new java.util.HashMap<>(query == null ? java.util.Collections.emptyMap() : query);
-        q.put("limit", String.valueOf(size));
-        q.put("offset", String.valueOf(offset));
-        String range = offset + "-" + (offset + size - 1);
-        ResponseEntity<List<Map<String,Object>>> resp = useGateway()
-                ? gateway.list(resource, q, range, "items")
-                : direct.list(resource, q, range, "items");
-        List<Map<String,Object>> body = resp.getBody();
-        List<T> list = objectMapper.convertValue(body, objectMapper.getTypeFactory().constructCollectionType(List.class, type));
-        String contentRange = resp.getHeaders().getFirst("Content-Range");
-        long total = 0;
-        if (contentRange != null) {
-            int slash = contentRange.lastIndexOf('/');
-            if (slash >= 0) {
-                try { total = Long.parseLong(contentRange.substring(slash + 1).trim()); } catch (Exception ignored) {}
+        if (useGateway()) {
+            java.util.Map<String,String> q = new java.util.HashMap<>(query == null ? java.util.Collections.emptyMap() : query);
+            q.remove("page");
+            q.remove("size");
+            ResponseEntity<com.github.pgrest.client.PageResult<Map<String,Object>>> resp = gateway.page(resource, q, page, size);
+            com.github.pgrest.client.PageResult<Map<String,Object>> pr = resp.getBody();
+            java.util.List<Map<String,Object>> items = pr == null ? java.util.Collections.emptyList() : pr.getItems();
+            java.util.List<T> list = objectMapper.convertValue(items, objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, type));
+            long total = pr == null ? 0 : pr.getTotal();
+            return new com.github.pgrest.client.PageResult<>(page, size, total, list);
+        } else {
+            int offset = (page - 1) * size;
+            java.util.Map<String,String> q = new java.util.HashMap<>(query == null ? java.util.Collections.emptyMap() : query);
+            q.put("limit", String.valueOf(size));
+            q.put("offset", String.valueOf(offset));
+            String range = offset + "-" + (offset + size - 1);
+            ResponseEntity<java.util.List<java.util.Map<String,Object>>> resp = direct.list(resource, q, range, "items");
+            java.util.List<java.util.Map<String,Object>> body = resp.getBody();
+            java.util.List<T> list = objectMapper.convertValue(body, objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, type));
+            String contentRange = resp.getHeaders().getFirst("Content-Range");
+            long total = 0;
+            if (contentRange != null) {
+                int slash = contentRange.lastIndexOf('/');
+                if (slash >= 0) {
+                    try { total = Long.parseLong(contentRange.substring(slash + 1).trim()); } catch (Exception ignored) {}
+                }
             }
+            return new com.github.pgrest.client.PageResult<>(page, size, total, list);
         }
-        return new PageResult<>(page, size, total, list);
     }
 }

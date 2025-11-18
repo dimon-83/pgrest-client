@@ -23,23 +23,6 @@ public class PgRestController {
                                           @RequestHeader(value = "Range", required = false) String range,
                                           @RequestHeader(value = "Range-Unit", required = false) String rangeUnit) {
         PgQueryBuilder b = PgQueryBuilder.fromQuery(query);
-        if (range != null && (rangeUnit == null || "items".equalsIgnoreCase(rangeUnit))) {
-            int dash = range.indexOf('-');
-            if (dash > 0) {
-                try {
-                    int start = Integer.parseInt(range.substring(0, dash).trim());
-                    int end = Integer.parseInt(range.substring(dash + 1).trim());
-                    int size = end - start + 1;
-                    if (size > 0) b.limit(size);
-                    if (start >= 0) b.offset(start);
-                    int page = size > 0 ? (start / size) + 1 : 1;
-                    PageResult<Map> pr = client.page(resource, b, page, size, Map.class);
-                    org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-                    headers.add("Content-Range", "items " + start + "-" + end + "/" + pr.getTotal());
-                    return ResponseEntity.ok().headers(headers).body((List) pr.getItems());
-                } catch (Exception ignored) {}
-            }
-        }
         List<Map> list = client.list(resource, b, Map.class);
         return ResponseEntity.ok(list);
     }
@@ -60,5 +43,17 @@ public class PgRestController {
     public int delete(@PathVariable("resource") String resource, @RequestParam Map<String, String> query) {
         PgQueryBuilder b = PgQueryBuilder.fromQuery(query);
         return client.delete(resource, b);
+    }
+
+    @GetMapping("/{resource}/page")
+    public PageResult<Map> page(@PathVariable("resource") String resource,
+                                @RequestParam Map<String, String> query,
+                                @RequestParam("page") int page,
+                                @RequestParam("size") int size) {
+        java.util.Map<String,String> q = new java.util.HashMap<>(query == null ? java.util.Collections.emptyMap() : query);
+        q.remove("page");
+        q.remove("size");
+        PgQueryBuilder b = PgQueryBuilder.fromQuery(q);
+        return client.page(resource, b, page, size, Map.class);
     }
 }

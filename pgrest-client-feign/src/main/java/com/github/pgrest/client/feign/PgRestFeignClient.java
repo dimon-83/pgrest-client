@@ -1,5 +1,6 @@
 package com.github.pgrest.client.feign;
 
+import com.github.pgrest.client.PageResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,4 +28,10 @@ public interface PgRestFeignClient {
 
     @DeleteMapping("/pgrest/{resource}")
     ResponseEntity<Integer> delete(@PathVariable("resource") String resource, @RequestParam Map<String, String> query);
+
+    @GetMapping("/pgrest/{resource}/page")
+    ResponseEntity<PageResult<Map<String,Object>>> page(@PathVariable("resource") String resource,
+                                                        @RequestParam Map<String,String> query,
+                                                        @RequestParam("page") int page,
+                                                        @RequestParam("size") int size);
 }

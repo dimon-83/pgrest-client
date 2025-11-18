@@ -2,7 +2,7 @@
 set -euo pipefail
 
 HOST=${1:-127.0.0.1}
-PORT=${2:-1080}
+PORT=${2:-1082}
 REMOTE=${3:-origin}
 ENDPOINT=${4:-ubuntu@10.38.245.92}
 
@@ -16,6 +16,22 @@ URL=$(git remote get-url "$REMOTE")
 
 # 1) 启动 ssh -D 代理（可选）：传入 ENDPOINT 如 ubuntu@10.38.245.92 则先建立隧道
 CONTROL_PATH="${HOME}/.ssh/pgrest-socks-${HOST}-${PORT}"
+clean_up_flag=0
+cleanup() {
+  if [[ "$clean_up_flag" != 1 ]]; then
+    if [[ -n "$ENDPOINT" ]]; then
+      ssh -O exit -o ControlPath="$CONTROL_PATH" "$ENDPOINT" || true
+    fi
+    if command -v pgrep >/dev/null 2>&1; then
+      pgrep -f "ssh.*-D[[:space:]]*$PORT" | xargs -r kill || true
+    fi
+    rm -f "$CONTROL_PATH" 2>/dev/null || true
+    unset ALL_PROXY
+    unset GIT_SSH_COMMAND
+    clean_up_flag=1
+  fi
+}
+trap cleanup EXIT
 if [[ -n "$ENDPOINT" ]]; then
   ssh -o ControlMaster=yes \
       -o ControlPath="$CONTROL_PATH" \
@@ -45,6 +61,4 @@ else
 fi
 
 # 3) 清理 ssh 动态代理
-if [[ -n "$ENDPOINT" ]]; then
-  ssh -O exit -o ControlPath="$CONTROL_PATH" "$ENDPOINT" || true
-fi
+cleanup

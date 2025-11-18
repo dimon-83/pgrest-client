@@ -2,7 +2,7 @@ package com.github.pgrest.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.github.pgrest.client.gateway.PgRestGatewayController;
+import com.github.pgrest.client.gateway.PgRestController;
 import com.github.pgrest.client.http.HttpExecutor;
 import com.github.pgrest.client.http.JdkHttpExecutor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -50,7 +50,7 @@ public class PgRestAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "pgrest.gateway", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public PgRestGatewayController pgRestGatewayController(PgRestClient client) {
-        return new PgRestGatewayController(client);
+    public PgRestController pgRestGatewayController(PgRestClient client) {
+        return new PgRestController(client);
     }
 }

@@ -10,6 +10,7 @@ spring:
 
 pgrest:
   base-url: http://127.0.0.1:3000
+  service-name: postgrest-service
   db-role: api_user
   secret: reallyreallyreallyreallyverysafe
   jwt-ttl-seconds: 3600

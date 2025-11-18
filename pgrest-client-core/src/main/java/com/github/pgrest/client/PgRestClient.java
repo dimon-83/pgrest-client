@@ -102,7 +102,11 @@ public class PgRestClient {
         Map<String,Object> payload = new java.util.HashMap<>();
         if (claims != null) payload.putAll(claims);
         if (claimsHandler != null) payload = claimsHandler.apply(payload);
-        else payload = java.util.function.UnaryOperator.<Map<String,Object>>identity().andThen(c -> { c.put("user", "test"); return c; }).apply(payload);
+        else {
+            String du = config.getDefaultUser();
+            if (du != null && !du.isBlank()) payload.put("user", du);
+            else payload = java.util.function.UnaryOperator.<Map<String,Object>>identity().andThen(c -> { c.put("user", "test"); return c; }).apply(payload);
+        }
         String secret = config.getSecret();
         if (secret == null || secret.isBlank()) secret = config.getJwtSecret();
         if (secret == null || secret.isBlank()) throw new IllegalStateException("jwt-secret is missing");
@@ -113,8 +117,14 @@ public class PgRestClient {
         long expSec = nowSec + Math.max(1, config.getJwtTtlSeconds());
         payload.put("iat", nowSec);
         payload.put("exp", expSec);
+        if (config.isAddNbf()) payload.put("nbf", nowSec);
+        if (config.isAddJti()) payload.put("jti", java.util.UUID.randomUUID().toString());
         String role = config.getDbRole();
         if (role != null && !role.isBlank()) payload.put("role", role);
+        String iss = config.getJwtIssuer();
+        if (iss != null && !iss.isBlank()) payload.put("iss", iss);
+        String aud = config.getJwtAudience();
+        if (aud != null && !aud.isBlank()) payload.put("aud", aud);
         String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
         String payloadJson;
         try { payloadJson = objectMapper.writeValueAsString(payload); } catch (Exception e) { throw new RuntimeException(e); }

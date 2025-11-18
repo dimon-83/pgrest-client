@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping(path = "/api/pg", produces = MediaType.APPLICATION_JSON_VALUE)
-public class PgRestGatewayController {
+@RequestMapping(path = "/pgrest", produces = MediaType.APPLICATION_JSON_VALUE)
+public class PgRestController {
     private final PgRestClient client;
 
-    public PgRestGatewayController(PgRestClient client) { this.client = client; }
+    public PgRestController(PgRestClient client) { this.client = client; }
 
     @GetMapping("/{resource}")
     public ResponseEntity<List<Map>> list(@PathVariable("resource") String resource,

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "${pgrest.gateway-service-name}", configuration = PgRestFeignConfig.class, contextId = "usersFeignExample")
+@FeignClient(name = "${pgrest.gateway-service-name}", configuration = PgRestFeignConfig.class, contextId = "${pgrest.gateway-service-name}-pgrestClient")
 public interface UsersFeignClient {
     @GetMapping("/api/pg/users")
     List<UserVO> list(@RequestParam Map<String,String> query);

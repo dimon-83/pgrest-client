@@ -65,5 +65,4 @@ jobs:
             -P signing \
             -DskipTests \
             -Dgpg.keyname="$GPG_KEYID" \
-            -Dgpg.passphrase="$GPG_PASSPHRASE" \
-            -pl pgrest-client-core,pgrest-client-starter -am deploy
+            -pl pgrest-client-core,pgrest-client-starter,pgrest-client-feign -am deploy

@@ -221,3 +221,6 @@ target/test-classes/com/github/pgrest/client/PgRestClientTest.class
 target/test-classes/com/github/pgrest/client/feign/PgRestFeignIT.class
 target/test-classes/com/github/pgrest/client/feign/PgRestTypedClientTest$StubDirect.class
 target/test-classes/com/github/pgrest/client/feign/PgRestTypedClientTest$StubGateway.class
+examples/pgrestclient-direct/target/classes/io/github/dimon83/examples/pgrest/DirectExampleMain.class
+examples/pgrestclient-direct/target/classes/io/github/dimon83/examples/pgrest/DirectExampleMain.class
+examples/pgrestclient-direct/target/classes/io/github/dimon83/examples/pgrest/DirectExampleMain.class

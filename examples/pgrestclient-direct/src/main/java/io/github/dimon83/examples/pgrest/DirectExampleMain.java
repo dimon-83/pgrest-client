@@ -16,7 +16,7 @@ import java.util.Map;
 public class DirectExampleMain {
     public static void main(String[] args) {
         PgClientConfig cfg = new PgClientConfig();
-        cfg.setBaseUrl("http://10.38.245.92:3007");
+        cfg.setBaseUrl("http://127.0.0.1:3000");
         cfg.setSecret("reallyreallyreallyreallyverysafe");
         cfg.setJwtTtlSeconds(3600);
         cfg.setDbRole("api_user");
@@ -25,23 +25,23 @@ public class DirectExampleMain {
         HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
         PgRestClient client = new PgRestClient(cfg, new JdkHttpExecutor(http), mapper);
 
-        PgQueryBuilder qb = new PgQueryBuilder().select("id,park_code,equip_name,tenant_id").orderDesc("id").limit(5);
-        List<Map> rows = client.list("gate_info", qb, Map.class);
+        PgQueryBuilder qb = new PgQueryBuilder().select("id,user_name,created_at").orderDesc("created_at").limit(5);
+        List<Map> rows = client.list("users", qb, Map.class);
         System.out.println("list size=" + rows.size());
 
-        PageResult<Map> page = client.page("gate_info", new PgQueryBuilder().orderAsc("id"), 1, 10, Map.class);
+        PageResult<Map> page = client.page("users", new PgQueryBuilder().orderAsc("id"), 1, 10, Map.class);
         System.out.println("page total=" + page.getTotal());
         try {
-            List<Map> ins = client.insert("gate_info", Map.of("equip_name", "demo"), Map.class);
+            List<Map> ins = client.insert("users", Map.of("user_name", "alice"), Map.class);
             System.out.println("inserted=" + ins.size());
             if (ins == null || ins.isEmpty() || ins.get(0) == null || ins.get(0).get("id") == null) {
                 System.out.println("skip update/delete: insert empty");
                 return;
             }
             Object id = ins.get(0).get("id");
-            List<Map> upd = client.update("gate_info", new PgQueryBuilder().eq("id", id), Map.of("equip_name", "demo2"), Map.class);
+            List<Map> upd = client.update("users", new PgQueryBuilder().eq("id", id), Map.of("status", "active"), Map.class);
             System.out.println("updated=" + upd.size());
-            int del = client.delete("gate_info", new PgQueryBuilder().eq("id", id));
+            int del = client.delete("users", new PgQueryBuilder().eq("id", id));
             System.out.println("deleted=" + del);
         } catch (Exception e) {
             System.out.println("write failed: " + e.getMessage());

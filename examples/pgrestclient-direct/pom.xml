@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrestclient-direct</artifactId>
-  <version>0.1.6</version>
+  <version>0.1.7</version>
   <properties>
     <java.version>17</java.version>
   </properties>
@@ -10,7 +10,7 @@
     <dependency>
       <groupId>io.github.dimon-83</groupId>
       <artifactId>pgrest-spring-boot-starter</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

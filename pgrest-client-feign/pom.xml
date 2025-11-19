@@ -3,7 +3,7 @@
   <parent>
     <groupId>io.github.dimon-83</groupId>
     <artifactId>pgrest-client</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>pgrest-client-feign</artifactId>

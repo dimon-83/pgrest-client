@@ -31,16 +31,7 @@
     <system>GitHub Issues</system>
     <url>https://github.com/dimon-83/pgrest-client/issues</url>
   </issueManagement>
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
+  
   <properties>
     <java.version>17</java.version>
     <spring.boot.version>3.2.9</spring.boot.version>
@@ -89,17 +80,6 @@
         </configuration>
       </plugin>
       
-      <plugin>
-        <groupId>org.sonatype.central</groupId>
-        <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>0.9.0</version>
-        <extensions>true</extensions>
-        <configuration>
-          <publishingServerId>central</publishingServerId>
-          <autoPublish>true</autoPublish>
-          <waitUntil>published</waitUntil>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -178,6 +158,37 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>central-publish</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.9.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+              <waitUntil>published</waitUntil>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>legacy-ossrh</id>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+          <id>ossrh</id>
+          <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+      </distributionManagement>
     </profile>
   </profiles>
   

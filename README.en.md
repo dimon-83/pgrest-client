@@ -2,13 +2,14 @@
 
 [English](README.en.md) | [中文](README.md)
 
-PostgREST Java client and Spring Boot Starter. The project has been split into modules: a zero-dependency core (JDK HttpClient) and a Starter for auto-configuration with optional Feign/Gateway.
+PostgREST Java client and Spring Boot Starter. The project is split into modules: a zero-dependency core (JDK HttpClient), a Starter for auto-configuration, and an optional standalone Feign module.
 
 ## Project Layout
 - `pgrest-client` (parent, packaging `pom`)
-  - `pgrest-client-core`: core library (`PgRestClient`, `PgClientConfig`, `PgQueryBuilder`, `PageResult`, HTTP abstraction and implementations: `JdkHttpExecutor`, `OkHttpExecutor`)
-  - `pgrest-client-spring-boot-starter`: Starter (`PgRestAutoConfiguration`, `PgRestProperties`, optional Feign and Gateway)
-  - `examples/pgrestclient-direct`: example using core/starter
+  - `pgrest-client-core`: core library (`PgRestClient`, `PgClientConfig`, `PgQueryBuilder`, `PageResult`, HTTP abstraction: `JdkHttpExecutor`, `OkHttpExecutor`)
+  - `pgrest-spring-boot-starter`: Starter (`PgRestAutoConfiguration`, `PgRestProperties`, gateway controller `/pgrest`)
+  - `pgrest-client-feign`: Feign clients and typed adapter (`PgRestFeignClient` gateway, `PgRestDirectFeignClient` direct, `PgRestTypedClient`)
+  - `examples/pgrestclient-direct`: example (direct/starter usage)
 
 ## Maven Dependencies
 - Core (for non-Spring apps or minimal footprint):
@@ -16,16 +17,25 @@ PostgREST Java client and Spring Boot Starter. The project has been split into m
 <dependency>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-client-core</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
 </dependency>
 ```
 
-- Spring Boot Starter (auto-configures PgRestClient/ObjectMapper/HttpExecutor, optional Feign/Gateway):
+- Spring Boot Starter (auto-configures PgRestClient/ObjectMapper/HttpExecutor; Feign is separate and opt-in):
 ```xml
 <dependency>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-spring-boot-starter</artifactId>
-  <version>0.1.3</version>
+  <version>0.1.6</version>
+</dependency>
+```
+
+- Optional Feign module:
+```xml
+<dependency>
+  <groupId>io.github.dimon-83</groupId>
+  <artifactId>pgrest-client-feign</artifactId>
+  <version>0.1.6</version>
 </dependency>
 ```
 
@@ -39,17 +49,19 @@ pgrest:
   db-role: api_user
   jwt-ttl-seconds: 3600
   auth-enabled: true
-
-pgrest:
-  gateway:
+  # Feign (optional module) explicit enable switch
+  feign:
     enabled: true
+  # Feign service name (optional), defaults to spring.application.name
+  # service-name: postgrest-service
 ```
 - `pgrest.base-url`: PostgREST root URL
 - `pgrest.db-role`: JWT `role` claim for PostgREST role switching
 - `pgrest.jwt-secret` / `pgrest.secret`: signing key (`secret` with `@` prefix means Base64-encoded key)
 - `pgrest.jwt-ttl-seconds`: token TTL in seconds
 - `pgrest.auth-enabled`: auto inject `Authorization: Bearer <jwt>` on all requests
-- `pgrest.gateway.enabled`: enable `/api/pg/{resource}` gateway controller
+- `pgrest.feign.enabled`: enable Feign clients (only effective if `pgrest-client-feign` is on the classpath)
+- `pgrest.service-name`: Feign service name; defaults to `spring.application.name` when omitted
 
 ## Usage (PgRestClient)
 ```java
@@ -84,8 +96,9 @@ VOs should use camelCase property names (e.g., `createdAt`). Jackson `SNAKE_CASE
 - Build query string: `builder.build()` → `?select=...&col=eq.xxx&order=...&limit=...&offset=...`
 
 ## Feign & Gateway (optional)
-- Feign clients: `PgRestFeignClient` (direct), `PgRestGatewayFeignClient` (your gateway)
-- Typed adapter: `PgRestTypedClient` for `List<T>` and `PageResult<T>`, auto sets `Range-Unit: items` and `Range: start-end` and injects `limit/offset`
+- Gateway client: `PgRestFeignClient` calls your service `/pgrest/{resource}`
+- Direct client: `PgRestDirectFeignClient` calls PostgREST root `/{resource}`
+- Typed adapter: `PgRestTypedClient` for `List<T>` and `PageResult<T>`; gateway paging via `/pgrest/{resource}/page`, direct paging via Range headers
 
 ## Notes
 - Core defaults to JDK `HttpClient`; OkHttp adapter can be used for high concurrency/interceptors/WebSocket scenarios

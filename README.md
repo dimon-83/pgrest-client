@@ -2,13 +2,14 @@
 
 [English](README.en.md) | [中文](README.md)
 
-PostgREST Java 客户端与 Spring Boot Starter。当前项目已按模块拆分：核心零依赖（JDK HttpClient），Starter 负责自动装配与可选的 Feign/Gateway 集成。
+PostgREST Java 客户端与 Spring Boot Starter。项目按模块拆分：核心零依赖（JDK HttpClient），Starter 负责自动装配，可选引入独立的 Feign 模块。
 
 ## 项目结构
 - `pgrest-client`（父工程，packaging `pom`）
-  - `pgrest-client-core`：核心库，包含 `PgRestClient`、`PgClientConfig`、`PgQueryBuilder`、`PageResult`、HTTP 抽象与实现（`JdkHttpExecutor`、`OkHttpExecutor`）
-  - `pgrest-client-spring-boot-starter`：Starter，提供 `PgRestAutoConfiguration`、`PgRestProperties`，以及可选的 Feign 与 Gateway 组件
-  - `examples/pgrestclient-direct`：示例，直接使用核心能力/Starter 访问 PostgREST
+  - `pgrest-client-core`：核心库（`PgRestClient`、`PgClientConfig`、`PgQueryBuilder`、`PageResult`、HTTP 抽象：`JdkHttpExecutor`、`OkHttpExecutor`）
+  - `pgrest-spring-boot-starter`：Starter（`PgRestAutoConfiguration`、`PgRestProperties`、网关控制器 `/pgrest`）
+  - `pgrest-client-feign`：Feign 客户端与类型封装（`PgRestFeignClient` 网关、`PgRestDirectFeignClient` 直连、`PgRestTypedClient`）
+  - `examples/pgrestclient-direct`：示例（直连/Starter 综合演示）
 
 ## Maven 引入
 - 核心库（非 Spring 项目或需最小依赖）：
@@ -16,16 +17,25 @@ PostgREST Java 客户端与 Spring Boot Starter。当前项目已按模块拆分
 <dependency>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-client-core</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
 </dependency>
 ```
 
-- Spring Boot Starter（自动装配 PgRestClient/ObjectMapper/HttpExecutor，并可启用 Feign/Gateway）：
+- Spring Boot Starter（自动装配 PgRestClient/ObjectMapper/HttpExecutor，网关控制器，Feign 需单独引入并开关）：
 ```xml
 <dependency>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-spring-boot-starter</artifactId>
-  <version>0.1.3</version>
+  <version>0.1.6</version>
+</dependency>
+```
+
+- 可选 Feign 模块：
+```xml
+<dependency>
+  <groupId>io.github.dimon-83</groupId>
+  <artifactId>pgrest-client-feign</artifactId>
+  <version>0.1.6</version>
 </dependency>
 ```
 
@@ -39,17 +49,19 @@ pgrest:
   db-role: api_user
   jwt-ttl-seconds: 3600
   auth-enabled: true
-
-pgrest:
-  gateway:
+  # Feign（可选模块）显式启用
+  feign:
     enabled: true
+  # Feign 服务名（可选），默认取 spring.application.name
+  # service-name: postgrest-service
 ```
 - `pgrest.base-url`：PostgREST 根地址
 - `pgrest.db-role`：写入 JWT 的 `role`，用于 PostgREST 切换数据库角色
 - `pgrest.jwt-secret` / `pgrest.secret`：签名密钥（`secret` 以 `@` 前缀表示后续为 Base64）
 - `pgrest.jwt-ttl-seconds`：JWT 过期时间（秒）
 - `pgrest.auth-enabled`：是否为所有请求统一注入 `Authorization: Bearer <jwt>`
-- `pgrest.gateway.enabled`：开启网关控制器 `/api/pg/{resource}`
+- `pgrest.feign.enabled`：启用 Feign 客户端（仅在引入 `pgrest-client-feign` 时生效）
+- `pgrest.service-name`：Feign 服务名，未配置时默认使用 `spring.application.name`
 
 ## 使用示例（PgRestClient）
 ```java
@@ -77,8 +89,9 @@ int deleted = pgRestClient.delete("users", new PgQueryBuilder().eq("id", 1));
 - 分页：`limit/offset`
 
 ## Feign 与 Gateway（可选）
-- Feign 客户端：`PgRestFeignClient`（直连 PostgREST）、`PgRestGatewayFeignClient`（调用你的网关服务转发）
-- 强类型适配：`PgRestTypedClient` 支持 `List<T>`、`PageResult<T>` 并自动处理分页头（`Range-Unit: items`、`Range: start-end`）与查询参数注入
+- 网关客户端：`PgRestFeignClient`（调用你的服务的 `/pgrest/{resource}` 路由）
+- 直连客户端：`PgRestDirectFeignClient`（直接调用 PostgREST 根路径 `/ {resource}`）
+- 强类型适配：`PgRestTypedClient` 支持 `List<T>`、`PageResult<T>`，网关分页走 `/pgrest/{resource}/page`，直连分页用 Range 头
 
 ## 备注
 - 核心库默认使用 JDK `HttpClient`；可选引入 OkHttp 适配在高并发/拦截器/WebSocket 场景增强控制

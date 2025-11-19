@@ -50,7 +50,7 @@ public class PgRestAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "pgrest.gateway", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public PgRestController pgRestGatewayController(PgRestClient client) {
+    public PgRestController PgRestController(PgRestClient client) {
         return new PgRestController(client);
     }
 }

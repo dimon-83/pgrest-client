@@ -21,4 +21,5 @@ pgrest:
   gateway:
     enabled: true
 pgrest:
-  gateway-service-name: pgrest-boot-crud
+  feign:
+    enabled: true

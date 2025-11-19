@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @AutoConfiguration
 @ConditionalOnClass(EnableFeignClients.class)
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(prefix = "pgrest.feign", name = "enabled", havingValue = "true")
 @EnableFeignClients(basePackageClasses = PgRestFeignClient.class)
 public class PgRestFeignAutoConfiguration {
     @Bean

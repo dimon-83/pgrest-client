@@ -62,7 +62,7 @@ jobs:
       - name: Deploy to Central
         run: |
           mvn -B -s .mvn/settings.xml \
-            -P signing \
+            -P signing,central-publish \
             -DskipTests \
             -Dgpg.keyname="$GPG_KEYID" \
             -pl pgrest-client-core,pgrest-client-starter,pgrest-client-feign -am deploy

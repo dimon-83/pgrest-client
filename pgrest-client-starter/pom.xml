@@ -3,7 +3,7 @@
   <parent>
     <groupId>io.github.dimon-83</groupId>
     <artifactId>pgrest-client</artifactId>
-    <version>0.1.5</version>
+    <version>0.1.6</version>
   </parent>
   <artifactId>pgrest-spring-boot-starter</artifactId>
   <name>PostgREST Spring Boot Starter</name>

@@ -31,6 +31,14 @@ public class DirectExampleMain {
 
         PageResult<Map> page = client.page("users", new PgQueryBuilder().orderAsc("id"), 1, 10, Map.class);
         System.out.println("page total=" + page.getTotal());
+
+        PgQueryBuilder aggByStatus = new PgQueryBuilder().select("status,id.count()").orderAsc("status");
+        List<Map> statusStats = client.list("users", aggByStatus, Map.class);
+        System.out.println("status counts=" + statusStats);
+
+        PgQueryBuilder dailyStatsQb = new PgQueryBuilder().select("created_at::date,id.count()").orderAsc("created_at::date");
+        List<Map> dailyStats = client.list("users", dailyStatsQb, Map.class);
+        System.out.println("daily new users=" + dailyStats);
         try {
             List<Map> ins = client.insert("users", Map.of("user_name", "alice"), Map.class);
             System.out.println("inserted=" + ins.size());

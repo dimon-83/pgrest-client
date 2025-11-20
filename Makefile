@@ -4,6 +4,11 @@ GPG_PASSPHRASE ?=
 MAVEN_SETTINGS ?=
 ALT_DEPLOY_REPO ?=
 
+GPG_PASSPHRASE_FILE ?= .mvn/gpg-passphrase.txt
+ifeq ($(strip $(GPG_PASSPHRASE)),)
+GPG_PASSPHRASE := $(shell cat $(GPG_PASSPHRASE_FILE) 2>/dev/null)
+endif
+
 # Optional CLI args (skip when empty)
 SETTINGS_OPT := $(if $(MAVEN_SETTINGS),-s $(MAVEN_SETTINGS),)
 
@@ -37,4 +42,4 @@ deploy-ossrh:
 	$(MVN) -q $(SETTINGS_OPT) -Psigning,legacy-ossrh -DskipTests -D"gpg.keyname=$(GPG_KEYID)" -D"gpg.passphrase=$(GPG_PASSPHRASE)" deploy
 
 publish-central:
-	$(MVN) -s e:\workspace\pgrest-client\.mvn\settings.xml -P signing,central-publish -DskipTests -D"gpg.passphrase=$(GPG_PASSPHRASE)" deploy
+	$(MVN) -s "./.mvn/settings.xml" -P signing,central-publish -DskipTests -D"gpg.passphrase=$(GPG_PASSPHRASE)" deploy

@@ -34,7 +34,8 @@ public class PgRestClient {
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
-            return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
@@ -50,7 +51,8 @@ public class PgRestClient {
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
-            List<T> list = objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            List<T> list = readList(response.getBody(), type);
             String contentRange = getHeader(response.getHeaders(), "Content-Range", "items */0");
             long total = parseTotal(contentRange);
             return new PageResult<>(page, size, total, list);
@@ -84,7 +86,8 @@ public class PgRestClient {
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
-            List<T> list = objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            List<T> list = readList(response.getBody(), type);
             return list == null || list.isEmpty() ? null : list.get(0);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
@@ -160,7 +163,8 @@ public class PgRestClient {
             req.setBody(json);
             addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
-            return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
@@ -177,7 +181,8 @@ public class PgRestClient {
             req.setBody(json);
             addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
-            return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
@@ -228,7 +233,8 @@ public class PgRestClient {
             req.setBody(json);
             addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
-            return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
@@ -245,7 +251,8 @@ public class PgRestClient {
             req.setBody(json);
             addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
-            return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            ensure2xx(response);
+            return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
@@ -262,7 +269,7 @@ public class PgRestClient {
             req.setBody(json);
             addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
-            return objectMapper.readValue(response.getBody(), objectMapper.getTypeFactory().constructCollectionType(List.class, type));
+            return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
@@ -301,5 +308,27 @@ public class PgRestClient {
             if (e.getKey() != null && e.getKey().equalsIgnoreCase(name)) return e.getValue() == null ? def : e.getValue();
         }
         return def;
+    }
+
+    private void ensure2xx(HttpResponseData response) {
+        int s = response.getStatus();
+        if (s < 200 || s >= 300) throw new RuntimeException("HTTP " + s + ": " + (response.getBody() == null ? "" : response.getBody()));
+    }
+
+    private <T> List<T> readList(String body, Class<T> type) {
+        String s = body == null ? "" : body.trim();
+        if (s.isEmpty()) return java.util.Collections.emptyList();
+        if (s.startsWith("[")) {
+            try { return objectMapper.readValue(body, objectMapper.getTypeFactory().constructCollectionType(List.class, type)); } catch (Exception e) { throw new RuntimeException(e); }
+        }
+        if (s.startsWith("{")) {
+            try {
+                T obj = objectMapper.readValue(body, type);
+                java.util.List<T> l = new java.util.ArrayList<>(1);
+                l.add(obj);
+                return l;
+            } catch (Exception e) { throw new RuntimeException(e); }
+        }
+        return java.util.Collections.emptyList();
     }
 }

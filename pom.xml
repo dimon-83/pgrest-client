@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.dimon-83</groupId>
   <artifactId>pgrest-client</artifactId>
-  <version>0.1.7</version>
+  <version>0.1.9</version>
   <packaging>pom</packaging>
   <name>pgrest-client</name>
   <description>PostgREST Java client (parent)</description>
@@ -33,6 +33,7 @@
   </issueManagement>
   
   <properties>
+    <pgrest.client.version>0.1.8</pgrest.client.version>
     <java.version>17</java.version>
     <spring.boot.version>3.2.9</spring.boot.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -93,6 +94,24 @@
 
   <profiles>
     <profile>
+      <id>local-deploy</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>local</id>
+          <name>local-repo</name>
+          <url>file://${project.build.directory}/local-repo</url>
+        </snapshotRepository>
+        <repository>
+          <id>local</id>
+          <name>local-repo</name>
+          <url>file://${project.build.directory}/local-repo</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+    <profile>
       <id>signing</id>
       <build>
         <plugins>
@@ -138,6 +157,8 @@
             <configuration>
               <executable>gpg</executable>
               <useAgent>false</useAgent>
+              <passphraseServerId>gpg-passphrase</passphraseServerId>
+              <keyname>${gpg.keyname}</keyname>
               <gpgArguments>
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>
@@ -170,8 +191,7 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
-              <autoPublish>true</autoPublish>
-              <waitUntil>published</waitUntil>
+              <autoPublish>false</autoPublish>
             </configuration>
           </plugin>
         </plugins>

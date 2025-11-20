@@ -3,9 +3,30 @@
   <parent>
     <groupId>io.github.dimon-83</groupId>
     <artifactId>pgrest-client</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.9</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
+  <url>https://github.com/dimon-83/pgrest-client</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>dimon-83</id>
+      <name>dimon-83</name>
+      <url>https://github.com/dimon-83</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/dimon-83/pgrest-client.git</connection>
+    <developerConnection>scm:git:https://github.com/dimon-83/pgrest-client.git</developerConnection>
+    <url>https://github.com/dimon-83/pgrest-client</url>
+    <tag>HEAD</tag>
+  </scm>
   <artifactId>pgrest-client-feign</artifactId>
   <name>PostgREST Feign Clients</name>
   <description>Feign client interfaces and configuration for PostgREST</description>
@@ -32,4 +53,43 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <configuration>
+          <failOnError>false</failOnError>
+          <source>${java.version}</source>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <docencoding>${project.reporting.outputEncoding}</docencoding>
+          <charset>${project.reporting.outputEncoding}</charset>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -23,7 +23,8 @@ public class PgRestFeignConfig {
     }
 
     @Bean
-    public ObjectMapper pgRestFeignObjectMapper() {
+    public ObjectMapper pgRestFeignObjectMapper(@org.springframework.beans.factory.annotation.Autowired(required = false) ObjectMapper existing) {
+        if (existing != null) return existing;
         ObjectMapper mapper = new ObjectMapper();
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         return mapper;

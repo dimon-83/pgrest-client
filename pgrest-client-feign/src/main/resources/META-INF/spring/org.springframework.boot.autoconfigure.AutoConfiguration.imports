@@ -1,1 +1,2 @@
 com.github.pgrest.client.feign.PgRestFeignAutoConfiguration
+com.github.pgrest.client.feign.PgRestFeignDynamicClientsAutoConfiguration

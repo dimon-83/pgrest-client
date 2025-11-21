@@ -11,6 +11,11 @@ PostgREST Java client and Spring Boot Starter. The project is split into modules
   - `pgrest-client-feign`: Feign clients and typed adapter (`PgRestFeignClient` gateway, `PgRestDirectFeignClient` direct, `PgRestTypedClient`)
   - `examples/pgrestclient-direct`: example (direct/starter usage)
 
+## Layered Architecture
+- Data source access (core): use `pgrest-client-core` with `PgRestClient`; core provides a default `ObjectMapper` and supports multiple data sources registration
+- Single data source service (starter): `pgrest-spring-boot-starter` auto-configures one `PgRestClient` from `pgrest.*` and can expose `/pgrest` gateway controller
+- Service access (feign): `pgrest-client-feign` dynamically declares FeignClient beans per `service-name`; supports multiple providers via configuration
+
 ## Maven Dependencies
 - Core (for non-Spring apps or minimal footprint):
 ```xml
@@ -63,6 +68,34 @@ pgrest:
 - `pgrest.feign.enabled`: enable Feign clients (only effective if `pgrest-client-feign` is on the classpath)
 - `pgrest.service-name`: Feign service name; defaults to `spring.application.name` when omitted
 
+## Core new features (0.1.10)
+- Default `ObjectMapper`: Snake Case + `JavaTimeModule` (dates serialized as ISO-8601)
+- Multiple data sources: declare multiple sources under `application.yml` and get named beans
+```yaml
+pgrest:
+  datasources:
+    main:
+      base-url: http://localhost:3000
+      db-role: web_user
+      secret: "@BASE64_256BIT_KEY"
+      jwt-ttl-seconds: 3600
+      connect-timeout-millis: 5000
+      read-timeout-millis: 10000
+    audit:
+      base-url: http://localhost:3001
+      jwt-secret: "super-secret-plain-256-bit"
+      auth-enabled: true
+      jwt-issuer: myapp
+      jwt-audience: audit
+```
+```java
+@Autowired @Qualifier("pgrestClient.main") PgRestClient mainClient;
+@Autowired @Qualifier("pgrestClient.audit") PgRestClient auditClient;
+
+List<Map> list = mainClient.list("users", new PgQueryBuilder().limit(5), Map.class);
+```
+Example reference: `examples/spring-boot-core-multids/src/main/java/io/github/dimon83/examples/coremultids/MultiDsController.java:26`
+
 ## Usage (PgRestClient)
 ```java
 @Autowired
@@ -99,6 +132,32 @@ VOs should use camelCase property names (e.g., `createdAt`). Jackson `SNAKE_CASE
 - Gateway client: `PgRestFeignClient` calls your service `/pgrest/{resource}`
 - Direct client: `PgRestDirectFeignClient` calls PostgREST root `/{resource}`
 - Typed adapter: `PgRestTypedClient` for `List<T>` and `PageResult<T>`; gateway paging via `/pgrest/{resource}/page`, direct paging via Range headers
+
+### Dynamic Feign clients (0.1.10)
+- Enable dynamic registration and declare multiple clients by service name (`gateway|direct` modes, optional `url` for fixed direct, `pathPrefix` for direct route prefix)
+```yaml
+pgrest:
+  feign:
+    enabled: true
+    clients:
+      A:
+        serviceName: a-service
+        mode: gateway
+      B:
+        serviceName: b-service
+        mode: direct
+        pathPrefix: /pgrest
+```
+```java
+@Autowired @Qualifier("pgrestFeignClient.a-service") PgRestFeignClient aGateway;
+@Autowired @Qualifier("pgrestDirectFeignClient.b-service") PgRestDirectFeignClient bDirect;
+
+ResponseEntity<List<Map<String,Object>>> a = aGateway.list("users", Map.of("select","id,user_name,status"));
+ResponseEntity<List<Map<String,Object>>> b = bDirect.list("users", Map.of("select","id,user_name,status"));
+```
+References:
+- Config: `examples/spring-boot-alicloud-crud/src/main/resources/application.yml:24`
+- Code: `examples/spring-boot-alicloud-crud/src/main/java/io/github/dimon83/examples/bootcrud/PgRestDynamicFeignExampleController.java:22`
 
 ## Notes
 - Core defaults to JDK `HttpClient`; OkHttp adapter can be used for high concurrency/interceptors/WebSocket scenarios

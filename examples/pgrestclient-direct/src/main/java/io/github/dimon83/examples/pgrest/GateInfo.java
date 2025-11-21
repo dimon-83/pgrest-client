@@ -48,4 +48,21 @@ public class GateInfo {
     public void setUpdateBy(String updateBy) { this.updateBy = updateBy; }
     public Long getTenantId() { return tenantId; }
     public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
+    public String toString() {
+        return "GateInfo{" +
+            "id=" + id +
+            ", parkCode='" + parkCode + '\'' +
+            ", equipName='" + equipName + '\'' +
+            ", equipType='" + equipType + '\'' +
+            ", longitude=" + longitude +
+            ", latitude=" + latitude +
+            ", equipCode='" + equipCode + '\'' +
+            ", delFlag='" + delFlag + '\'' +
+            ", createTime=" + createTime +
+            ", createBy='" + createBy + '\'' +
+            ", updateTime=" + updateTime +
+            ", updateBy='" + updateBy + '\'' +
+            ", tenantId=" + tenantId +
+            '}';
+    }
 }

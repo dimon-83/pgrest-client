@@ -1,0 +1,18 @@
+server:
+  port: 8081
+
+pgrest:
+  datasources:
+    main:
+      base-url: http://localhost:3000
+      db-role: web_user
+      secret: "@BASE64_256BIT_KEY"
+      jwt-ttl-seconds: 3600
+      connect-timeout-millis: 5000
+      read-timeout-millis: 10000
+    audit:
+      base-url: http://localhost:3001
+      jwt-secret: "super-secret-plain-256-bit"
+      auth-enabled: true
+      jwt-issuer: myapp
+      jwt-audience: audit

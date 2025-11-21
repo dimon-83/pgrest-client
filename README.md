@@ -11,6 +11,11 @@ PostgREST Java 客户端与 Spring Boot Starter。项目按模块拆分：核心
   - `pgrest-client-feign`：Feign 客户端与类型封装（`PgRestFeignClient` 网关、`PgRestDirectFeignClient` 直连、`PgRestTypedClient`）
   - `examples/pgrestclient-direct`：示例（直连/Starter 综合演示）
 
+## 按层级划分
+- 数据源访问（core）：通过 `pgrest-client-core` 直接使用 `PgRestClient`，支持默认 `ObjectMapper` 与多数据源注册
+- 单一数据源服务（starter）：通过 `pgrest-spring-boot-starter` 基于 `pgrest.*` 自动装配一个 `PgRestClient` 并可暴露 `/pgrest` 网关控制器
+- 服务访问（feign）：通过 `pgrest-client-feign` 按约定的 `service-name` 动态声明对应的 FeignClient Bean；支持多个服务提供方的推广配置
+
 ## Maven 引入
 - 核心库（非 Spring 项目或需最小依赖）：
 ```xml
@@ -63,6 +68,34 @@ pgrest:
 - `pgrest.feign.enabled`：启用 Feign 客户端（仅在引入 `pgrest-client-feign` 时生效）
 - `pgrest.service-name`：Feign 服务名，未配置时默认使用 `spring.application.name`
 
+## 核心（core）新特性与示例（0.1.10）
+- 默认 `ObjectMapper`：Snake Case + `JavaTimeModule`（时间序列化为 ISO-8601）
+- 多数据源：在 `application.yml` 下声明多个数据源，自动注册命名 Bean
+```yaml
+pgrest:
+  datasources:
+    main:
+      base-url: http://localhost:3000
+      db-role: web_user
+      secret: "@BASE64_256BIT_KEY"
+      jwt-ttl-seconds: 3600
+      connect-timeout-millis: 5000
+      read-timeout-millis: 10000
+    audit:
+      base-url: http://localhost:3001
+      jwt-secret: "super-secret-plain-256-bit"
+      auth-enabled: true
+      jwt-issuer: myapp
+      jwt-audience: audit
+```
+```java
+@Autowired @Qualifier("pgrestClient.main") PgRestClient mainClient;
+@Autowired @Qualifier("pgrestClient.audit") PgRestClient auditClient;
+
+List<Map> list = mainClient.list("users", new PgQueryBuilder().limit(5), Map.class);
+```
+示例参考：`examples/spring-boot-core-multids/src/main/java/io/github/dimon83/examples/coremultids/MultiDsController.java:26`
+
 ## 使用示例（PgRestClient）
 ```java
 @Autowired
@@ -90,8 +123,34 @@ int deleted = pgRestClient.delete("users", new PgQueryBuilder().eq("id", 1));
 
 ## Feign 与 Gateway（可选）
 - 网关客户端：`PgRestFeignClient`（调用你的服务的 `/pgrest/{resource}` 路由）
-- 直连客户端：`PgRestDirectFeignClient`（直接调用 PostgREST 根路径 `/ {resource}`）
+- 直连客户端：`PgRestDirectFeignClient`（直接调用 PostgREST 根路径 `/{resource}`）
 - 强类型适配：`PgRestTypedClient` 支持 `List<T>`、`PageResult<T>`，网关分页走 `/pgrest/{resource}/page`，直连分页用 Range 头
+
+### Feign 动态客户端配置与示例（0.1.10）
+- 开启动态注册，并按服务名声明多个客户端（支持 `gateway|direct` 模式、`url` 直连、`pathPrefix` 前缀）
+```yaml
+pgrest:
+  feign:
+    enabled: true
+    clients:
+      A:
+        serviceName: a-service
+        mode: gateway
+      B:
+        serviceName: b-service
+        mode: direct
+        pathPrefix: /pgrest
+```
+```java
+@Autowired @Qualifier("pgrestFeignClient.a-service") PgRestFeignClient aGateway;
+@Autowired @Qualifier("pgrestDirectFeignClient.b-service") PgRestDirectFeignClient bDirect;
+
+ResponseEntity<List<Map<String,Object>>> a = aGateway.list("users", Map.of("select","id,user_name,status"));
+ResponseEntity<List<Map<String,Object>>> b = bDirect.list("users", Map.of("select","id,user_name,status"));
+```
+示例参考：
+- 配置：`examples/spring-boot-alicloud-crud/src/main/resources/application.yml:24`
+- 代码：`examples/spring-boot-alicloud-crud/src/main/java/io/github/dimon83/examples/bootcrud/PgRestDynamicFeignExampleController.java:22`
 
 ## 备注
 - 核心库默认使用 JDK `HttpClient`；可选引入 OkHttp 适配在高并发/拦截器/WebSocket 场景增强控制

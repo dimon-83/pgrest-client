@@ -26,11 +26,21 @@ public class DirectExampleMain {
         mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         mapper.registerModule(new JavaTimeModule());
         HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-        PgRestClient client = new PgRestClient(cfg, new JdkHttpExecutor(http), mapper);
+        PgRestClient mainClient = new PgRestClient(cfg, new JdkHttpExecutor(http), mapper);
 
-        PgQueryBuilder qb = new PgQueryBuilder().select("id,park_code,equip_name,create_time").orderDesc("create_time").limit(5);
-        List<GateInfo> rows = client.list("gate_info", qb, GateInfo.class);
-        System.out.println("list size=" + rows.size());
+        PgClientConfig cfgAudit = new PgClientConfig();
+        cfgAudit.setBaseUrl("http://10.38.245.92:3007");
+        cfgAudit.setSecret("EWTZmvZBdZKetXZ4rRSwGtaVM5ZskecFN5wkdCrbh2TZaR2EC4dHwnXY8823TpeB");
+        cfgAudit.setJwtTtlSeconds(3600);
+        cfgAudit.setDbRole("api_user");
+        PgRestClient auditClient = new PgRestClient(cfgAudit, new JdkHttpExecutor(http), mapper);
+
+        PgQueryBuilder qb = new PgQueryBuilder().select("id,name").limit(5);
+        List<Map> rows = auditClient.list("test", qb, Map.class);
+        System.out.println("list :" + rows);
+        qb = new PgQueryBuilder().limit(5);
+        List<GateInfo> auditRows = mainClient.list("gate_info", qb, GateInfo.class);
+        System.out.println("audit " + auditRows);
 
         // //insert a new gate info
         // GateInfo newGate = new GateInfo();

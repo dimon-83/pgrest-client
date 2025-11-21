@@ -23,3 +23,11 @@ pgrest:
 pgrest:
   feign:
     enabled: true
+    clients:
+      A:
+        serviceName: a-service
+        mode: gateway
+      B:
+        serviceName: b-service
+        mode: direct
+        pathPrefix: /pgrest

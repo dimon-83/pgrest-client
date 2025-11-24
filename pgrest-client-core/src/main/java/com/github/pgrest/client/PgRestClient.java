@@ -15,8 +15,8 @@ public class PgRestClient {
     private final PgClientConfig config;
     private final HttpExecutor httpExecutor;
     private final ObjectMapper objectMapper;
-    private java.util.function.UnaryOperator<Map<String,Object>> claimsHandler;
-    private Supplier<String> authTokenSupplier;
+    private volatile java.util.function.UnaryOperator<Map<String,Object>> claimsHandler;
+    private volatile Supplier<String> authTokenSupplier;
 
     public PgRestClient(PgClientConfig config, HttpExecutor httpExecutor, ObjectMapper objectMapper) {
         this.config = config;
@@ -150,6 +150,8 @@ public class PgRestClient {
     public void setAuthTokenSupplier(Supplier<String> supplier) { this.authTokenSupplier = supplier; }
     public void setStaticAuthToken(String token) { this.authTokenSupplier = () -> token; }
 
+    public PgFrom from(String resource) { return new PgFrom(this, resource); }
+
     public <T> List<T> insert(String resource, Object payload, Class<T> type) {
         String url = config.getBaseUrl() + "/" + resource;
         try {
@@ -172,6 +174,46 @@ public class PgRestClient {
         String url = config.getBaseUrl() + "/" + resource + builder.build();
         try {
             String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            req.getHeaders().put("Prefer", "return=representation,count=exact");
+            req.setBody(json);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> List<T> insert(String resource, Object payload, PayloadFieldFilter filter, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource;
+        try {
+            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
+            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
+            String json = objectMapper.writeValueAsString(filtered);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            req.getHeaders().put("Prefer", "return=representation,count=exact");
+            req.setBody(json);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        try {
+            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
+            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
+            String json = objectMapper.writeValueAsString(filtered);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
             req.setMethod("POST");
@@ -260,6 +302,25 @@ public class PgRestClient {
         String url = config.getBaseUrl() + "/" + resource + builder.build();
         try {
             String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("PATCH");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            req.getHeaders().put("Prefer", "return=representation,count=exact");
+            req.setBody(json);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PayloadFieldFilter filter, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        try {
+            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
+            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
+            String json = objectMapper.writeValueAsString(filtered);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
             req.setMethod("PATCH");

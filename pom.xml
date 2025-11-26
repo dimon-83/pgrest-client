@@ -157,8 +157,9 @@
             <configuration>
               <executable>gpg</executable>
               <useAgent>false</useAgent>
-              <passphraseServerId>gpg-passphrase</passphraseServerId>
+              <!-- <passphraseServerId>gpg-passphrase</passphraseServerId> -->
               <keyname>${gpg.keyname}</keyname>
+              <passphrase>${env.GPG_PASSPHRASE}</passphrase>
               <gpgArguments>
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>

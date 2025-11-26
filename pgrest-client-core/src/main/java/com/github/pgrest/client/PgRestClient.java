@@ -17,6 +17,8 @@ public class PgRestClient {
     private final ObjectMapper objectMapper;
     private volatile java.util.function.UnaryOperator<Map<String,Object>> claimsHandler;
     private volatile Supplier<String> authTokenSupplier;
+    private volatile String readProfile;
+    private volatile String writeProfile;
 
     public PgRestClient(PgClientConfig config, HttpExecutor httpExecutor, ObjectMapper objectMapper) {
         this.config = config;
@@ -31,6 +33,7 @@ public class PgRestClient {
         req.setMethod("GET");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, false);
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
@@ -48,6 +51,7 @@ public class PgRestClient {
         req.setMethod("GET");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, false);
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
@@ -66,6 +70,7 @@ public class PgRestClient {
         req.setMethod("GET");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, false);
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
@@ -83,6 +88,7 @@ public class PgRestClient {
         req.setMethod("GET");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, false);
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
@@ -151,6 +157,11 @@ public class PgRestClient {
     public void setStaticAuthToken(String token) { this.authTokenSupplier = () -> token; }
 
     public PgFrom from(String resource) { return new PgFrom(this, resource); }
+    public PgFn fn(String function) { return new PgFn(this, function); }
+    public PgFn rpc(String function) { return new PgFn(this, function); }
+    public PgRestClient setReadProfile(String schema) { this.readProfile = schema; return this; }
+    public PgRestClient setWriteProfile(String schema) { this.writeProfile = schema; return this; }
+    public PgRestClient setProfile(String schema) { this.readProfile = schema; this.writeProfile = schema; return this; }
 
     public <T> List<T> insert(String resource, Object payload, Class<T> type) {
         String url = config.getBaseUrl() + "/" + resource;
@@ -158,12 +169,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(payload);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "return=representation,count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "return=representation,count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
             return readList(response.getBody(), type);
@@ -176,12 +188,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(payload);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "return=representation,count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "return=representation,count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
             return readList(response.getBody(), type);
@@ -196,12 +209,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(filtered);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "return=representation,count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "return=representation,count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
             return readList(response.getBody(), type);
@@ -216,12 +230,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(filtered);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "return=representation,count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "return=representation,count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
             return readList(response.getBody(), type);
@@ -234,12 +249,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(payload);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             return objectMapper.readValue(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
@@ -251,12 +267,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(payload);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             return objectMapper.readValue(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
@@ -268,12 +285,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(payload);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("POST");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
             return readList(response.getBody(), type);
@@ -291,6 +309,7 @@ public class PgRestClient {
             req.getHeaders().put("Content-Type", "application/json");
             req.getHeaders().put("Prefer", "count=exact");
             req.setBody(json);
+            applyProfile(req, true);
             addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
@@ -304,12 +323,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(payload);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("PATCH");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "return=representation,count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("PATCH");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "return=representation,count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
@@ -323,12 +343,13 @@ public class PgRestClient {
             String json = objectMapper.writeValueAsString(filtered);
             HttpRequestData req = new HttpRequestData();
             req.setUrl(url);
-            req.setMethod("PATCH");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            req.getHeaders().put("Prefer", "return=representation,count=exact");
-            req.setBody(json);
-            addAuth(req);
+        req.setMethod("PATCH");
+        req.getHeaders().put("Accept", "application/json");
+        req.getHeaders().put("Content-Type", "application/json");
+        req.getHeaders().put("Prefer", "return=representation,count=exact");
+        req.setBody(json);
+        applyProfile(req, true);
+        addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             return readList(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
@@ -341,6 +362,7 @@ public class PgRestClient {
         req.setMethod("DELETE");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, true);
         addAuth(req);
         try {
             HttpResponseData response = httpExecutor.execute(req);
@@ -361,6 +383,12 @@ public class PgRestClient {
             token = issueJwt(null);
         }
         if (token != null && !token.isBlank()) req.getHeaders().put("Authorization", "Bearer " + token);
+    }
+
+    private void applyProfile(HttpRequestData req, boolean write) {
+        String p = write ? writeProfile : readProfile;
+        if (p == null || p.isBlank()) return;
+        req.getHeaders().put(write ? "Content-Profile" : "Accept-Profile", p);
     }
 
     private String getHeader(Map<String,String> headers, String name, String def) {

@@ -42,4 +42,4 @@ deploy-ossrh:
 	$(MVN) -q $(SETTINGS_OPT) -Psigning,legacy-ossrh -DskipTests -D"gpg.keyname=$(GPG_KEYID)" -D"gpg.passphrase=$(GPG_PASSPHRASE)" deploy
 
 publish-central:
-	$(MVN) -s "./.mvn/settings.xml" -P signing,central-publish -DskipTests -D"gpg.passphrase=$(GPG_PASSPHRASE)" deploy
+	$(MVN) -s "./.mvn/settings.xml" -P signing,central-publish -DskipTests deploy

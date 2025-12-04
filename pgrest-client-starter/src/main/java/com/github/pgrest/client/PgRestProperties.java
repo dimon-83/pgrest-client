@@ -13,6 +13,8 @@ public class PgRestProperties {
     private String secret;
     private int jwtTtlSeconds = 3600;
     private boolean authEnabled = true;
+    private boolean addIat = false;
+    private int jwtClockSkewSeconds;
 
     public String getBaseUrl() { return baseUrl; }
     public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
@@ -32,4 +34,8 @@ public class PgRestProperties {
     public void setJwtTtlSeconds(int jwtTtlSeconds) { this.jwtTtlSeconds = jwtTtlSeconds; }
     public boolean isAuthEnabled() { return authEnabled; }
     public void setAuthEnabled(boolean authEnabled) { this.authEnabled = authEnabled; }
+    public boolean isAddIat() { return addIat; }
+    public void setAddIat(boolean addIat) { this.addIat = addIat; }
+    public int getJwtClockSkewSeconds() { return jwtClockSkewSeconds; }
+    public void setJwtClockSkewSeconds(int jwtClockSkewSeconds) { this.jwtClockSkewSeconds = jwtClockSkewSeconds; }
 }

@@ -123,10 +123,11 @@ public class PgRestClient {
         byte[] key = secret.startsWith("@") ? java.util.Base64.getDecoder().decode(secret.substring(1)) : secret.getBytes(StandardCharsets.UTF_8);
         if (key.length < 32) throw new IllegalStateException("jwt-secret must be at least 256 bits");
         long nowSec = java.time.Instant.now().getEpochSecond();
+        long skew = Math.max(0, config.getJwtClockSkewSeconds());
         long expSec = nowSec + Math.max(1, config.getJwtTtlSeconds());
-        payload.put("iat", nowSec);
+        if (config.isAddIat()) payload.put("iat", nowSec - skew);
         payload.put("exp", expSec);
-        if (config.isAddNbf()) payload.put("nbf", nowSec);
+        if (config.isAddNbf()) payload.put("nbf", nowSec - skew);
         if (config.isAddJti()) payload.put("jti", java.util.UUID.randomUUID().toString());
         String role = config.getDbRole();
         if (role != null && !role.isBlank()) payload.put("role", role);

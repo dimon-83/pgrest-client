@@ -12,6 +12,8 @@ public class PgClientConfig {
     private String defaultUser;
     private boolean addNbf;
     private boolean addJti;
+    private boolean addIat = true;
+    private int jwtClockSkewSeconds;
 
     public String getBaseUrl() { return baseUrl; }
     public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
@@ -35,4 +37,8 @@ public class PgClientConfig {
     public void setAddNbf(boolean addNbf) { this.addNbf = addNbf; }
     public boolean isAddJti() { return addJti; }
     public void setAddJti(boolean addJti) { this.addJti = addJti; }
+    public boolean isAddIat() { return addIat; }
+    public void setAddIat(boolean addIat) { this.addIat = addIat; }
+    public int getJwtClockSkewSeconds() { return jwtClockSkewSeconds; }
+    public void setJwtClockSkewSeconds(int jwtClockSkewSeconds) { this.jwtClockSkewSeconds = jwtClockSkewSeconds; }
 }

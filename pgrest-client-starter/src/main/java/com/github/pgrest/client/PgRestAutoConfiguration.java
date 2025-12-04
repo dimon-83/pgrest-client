@@ -45,6 +45,8 @@ public class PgRestAutoConfiguration {
         cfg.setSecret(properties.getSecret());
         cfg.setJwtTtlSeconds(properties.getJwtTtlSeconds());
         cfg.setAuthEnabled(properties.isAuthEnabled());
+        cfg.setAddIat(properties.isAddIat());
+        cfg.setJwtClockSkewSeconds(properties.getJwtClockSkewSeconds());
         return new PgRestClient(cfg, pgRestHttpExecutor, pgRestObjectMapper);
     }
 

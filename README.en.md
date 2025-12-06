@@ -121,6 +121,37 @@ UserVO one = pgRestClient.getById("users", 1L, UserVO.class);
 
 VOs should use camelCase property names (e.g., `createdAt`). Jackson `SNAKE_CASE` strategy maps `created_at` to `createdAt` automatically.
 
+## Prefer Header & Upsert (0.1.12)
+- New `PgPrefer` builder covering `handling/timezone/return/count/resolution/missing/max-affected/tx`; all core APIs have overloads accepting a `PgPrefer`.
+- Native upsert:
+  - `upsertMerge(...)` merges duplicates (`Prefer: resolution=merge-duplicates`)
+  - `upsertIgnore(...)` ignores duplicates (`Prefer: resolution=ignore-duplicates`)
+  - Use `PgFrom.onConflict(...)` or `PgQueryBuilder.raw("on_conflict", ...)` to specify conflict target (primary key or unique/exclusion constraint).
+
+```java
+// Custom Prefer
+PgPrefer prefer = PgPrefer.create()
+    .handlingStrict()
+    .timezone("America/Los_Angeles")
+    .returnRepresentation()
+    .countExact();
+pgRestClient.insert("projects", Map.of("name","x"), prefer, Map.class);
+
+// Upsert: merge on unique column
+pgRestClient.from("people")
+    .onConflict("email")
+    .prefer(PgPrefer.create().resolutionMergeDuplicates().returnRepresentation())
+    .insert(Map.of("email","a@b","name","Alice"), Map.class);
+
+// Upsert: ignore duplicates + fill missing with DEFAULT
+pgRestClient.from("orders")
+    .onConflict("order_no")
+    .prefer(PgPrefer.create().resolutionIgnoreDuplicates().missingDefault())
+    .insert(Map.of("order_no","A1"), Map.class);
+```
+
+> Note: When specifying columns as conflict target, a matching unique constraint or unique index must exist in the database, otherwise upsert fails.
+
 ## Query Builder
 - Columns: `select("col1,col2")`
 - Filters: `eq/ne/gt/gte/lt/lte/like/ilike/in/isNull/notNull`
@@ -159,6 +190,19 @@ References:
 - Config: `examples/spring-boot-alicloud-crud/src/main/resources/application.yml:24`
 - Code: `examples/spring-boot-alicloud-crud/src/main/java/io/github/dimon83/examples/bootcrud/PgRestDynamicFeignExampleController.java:22`
 
+### Feign Prefer injection (0.1.12)
+- Optionally provide a `PgPreferSupplier` bean to override the default Prefer; when absent, defaults to `count=exact`.
+```java
+@Bean
+PgPreferSupplier preferSupplier() { return () -> "handling=strict,count=exact"; }
+```
+
 ## Notes
 - Core defaults to JDK `HttpClient`; OkHttp adapter can be used for high concurrency/interceptors/WebSocket scenarios
 - Nacos integration has been removed from the core; use separate extensions if needed
+
+## Code Coverage (JaCoCo)
+- Run: `mvn clean verify` (executes tests and generates coverage reports)
+- Module report: `pgrest-client-*/target/site/jacoco/index.html`
+- Aggregate report: `target/site/jacoco-aggregate/index.html`
+- Thresholds can be tuned in the parent POM (currently non-blocking build, `LINE` coverage minimum `0.30`; adjust as needed or enable strict checks)

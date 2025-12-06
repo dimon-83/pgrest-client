@@ -1,10 +1,13 @@
 package com.github.pgrest.client;
 
+import java.util.StringJoiner;
+
 public class PgFrom {
     private final PgRestClient client;
     private final String resource;
     private final PgQueryBuilder builder = new PgQueryBuilder();
     private PayloadFieldFilter filter;
+    private PgPrefer prefer;
 
     public PgFrom(PgRestClient client, String resource) {
         this.client = client;
@@ -31,24 +34,28 @@ public class PgFrom {
     public PgFrom raw(String key, String value) { builder.raw(key, value); return this; }
 
     public PgFrom withFilter(PayloadFieldFilter filter) { this.filter = filter; return this; }
+    public PgFrom prefer(PgPrefer prefer) { this.prefer = prefer; return this; }
+    public PgFrom onConflict(String... columnsOrConstraint) { if (columnsOrConstraint == null || columnsOrConstraint.length == 0) return this; StringJoiner j = new StringJoiner(","); for (String c : columnsOrConstraint) j.add(c); builder.raw("on_conflict", j.toString()); return this; }
 
-    public <T> java.util.List<T> list(Class<T> type) { return client.list(resource, builder, type); }
+    public <T> java.util.List<T> list(Class<T> type) { return prefer == null ? client.list(resource, builder, type) : client.list(resource, builder, prefer, type); }
 
-    public <T> PageResult<T> page(int page, int size, Class<T> type) { return client.page(resource, builder, page, size, type); }
+    public <T> PageResult<T> page(int page, int size, Class<T> type) { return prefer == null ? client.page(resource, builder, page, size, type) : client.page(resource, builder, page, size, prefer, type); }
 
     public <T> T single(Class<T> type) {
         PgQueryBuilder qb = builder.copy().limit(1);
-        java.util.List<T> list = client.list(resource, qb, type);
+        java.util.List<T> list = prefer == null ? client.list(resource, qb, type) : client.list(resource, qb, prefer, type);
         return list == null || list.isEmpty() ? null : list.get(0);
     }
 
     public <T> java.util.List<T> insert(Object payload, Class<T> type) {
-        return filter == null ? client.insert(resource, payload, builder, type) : client.insert(resource, payload, builder, filter, type);
+        if (filter == null) return prefer == null ? client.insert(resource, payload, builder, type) : client.insert(resource, payload, builder, prefer, type);
+        return prefer == null ? client.insert(resource, payload, builder, filter, type) : client.insert(resource, payload, builder, filter, prefer, type);
     }
 
     public <T> java.util.List<T> update(Object payload, Class<T> type) {
-        return filter == null ? client.update(resource, builder, payload, type) : client.update(resource, builder, payload, filter, type);
+        if (filter == null) return prefer == null ? client.update(resource, builder, payload, type) : client.update(resource, builder, payload, prefer, type);
+        return prefer == null ? client.update(resource, builder, payload, filter, type) : client.update(resource, builder, payload, filter, prefer, type);
     }
 
-    public int delete() { return client.delete(resource, builder); }
+    public int delete() { return prefer == null ? client.delete(resource, builder) : client.delete(resource, builder, prefer); }
 }

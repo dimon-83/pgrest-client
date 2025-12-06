@@ -15,10 +15,11 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 @Configuration
 public class PgRestFeignConfig {
     @Bean
-    public RequestInterceptor pgRestHeadersInterceptor() {
+    public RequestInterceptor pgRestHeadersInterceptor(@org.springframework.beans.factory.annotation.Autowired(required = false) PgPreferSupplier supplier) {
         return template -> {
             template.header("Accept", "application/json");
-            template.header("Prefer", "count=exact");
+            String prefer = supplier == null ? null : supplier.getPrefer();
+            template.header("Prefer", prefer == null || prefer.isBlank() ? "count=exact" : prefer);
         };
     }
 

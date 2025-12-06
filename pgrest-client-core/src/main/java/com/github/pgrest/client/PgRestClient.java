@@ -42,6 +42,23 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> list(String resource, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        HttpRequestData req = new HttpRequestData();
+        req.setUrl(url);
+        req.setMethod("GET");
+        req.getHeaders().put("Accept", "application/json");
+        String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+        req.getHeaders().put("Prefer", p);
+        applyProfile(req, false);
+        addAuth(req);
+        try {
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> PageResult<T> page(String resource, PgQueryBuilder builder, int page, int size, Class<T> type) {
         int offset = (page - 1) * size;
         PgQueryBuilder qb = builder.copy().limit(size).offset(offset);
@@ -51,6 +68,28 @@ public class PgRestClient {
         req.setMethod("GET");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, false);
+        addAuth(req);
+        try {
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            List<T> list = readList(response.getBody(), type);
+            String contentRange = getHeader(response.getHeaders(), "Content-Range", "items */0");
+            long total = parseTotal(contentRange);
+            return new PageResult<>(page, size, total, list);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> PageResult<T> page(String resource, PgQueryBuilder builder, int page, int size, PgPrefer prefer, Class<T> type) {
+        int offset = (page - 1) * size;
+        PgQueryBuilder qb = builder.copy().limit(size).offset(offset);
+        String url = config.getBaseUrl() + "/" + resource + qb.build();
+        HttpRequestData req = new HttpRequestData();
+        req.setUrl(url);
+        req.setMethod("GET");
+        req.getHeaders().put("Accept", "application/json");
+        String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+        req.getHeaders().put("Prefer", p);
         applyProfile(req, false);
         addAuth(req);
         try {
@@ -78,6 +117,22 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public Map<String, Object> get(String resource, PgQueryBuilder builder, PgPrefer prefer) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        HttpRequestData req = new HttpRequestData();
+        req.setUrl(url);
+        req.setMethod("GET");
+        req.getHeaders().put("Accept", "application/json");
+        String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+        req.getHeaders().put("Prefer", p);
+        applyProfile(req, false);
+        addAuth(req);
+        try {
+            HttpResponseData response = httpExecutor.execute(req);
+            return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>(){});
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> T getById(String resource, Object id, Class<T> type) { return getById(resource, "id", id, new PgQueryBuilder(), type); }
 
     public <T> T getById(String resource, String idColumn, Object id, PgQueryBuilder builder, Class<T> type) {
@@ -88,6 +143,25 @@ public class PgRestClient {
         req.setMethod("GET");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, false);
+        addAuth(req);
+        try {
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            List<T> list = readList(response.getBody(), type);
+            return list == null || list.isEmpty() ? null : list.get(0);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> T getById(String resource, String idColumn, Object id, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        PgQueryBuilder qb = builder.copy().eq(idColumn, id).limit(1);
+        String url = config.getBaseUrl() + "/" + resource + qb.build();
+        HttpRequestData req = new HttpRequestData();
+        req.setUrl(url);
+        req.setMethod("GET");
+        req.getHeaders().put("Accept", "application/json");
+        String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+        req.getHeaders().put("Prefer", p);
         applyProfile(req, false);
         addAuth(req);
         try {
@@ -183,6 +257,27 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> insert(String resource, Object payload, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource;
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String def = "return=representation,count=exact";
+            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, Class<T> type) {
         String url = config.getBaseUrl() + "/" + resource + builder.build();
         try {
@@ -196,6 +291,27 @@ public class PgRestClient {
         req.setBody(json);
         applyProfile(req, true);
         addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String def = "return=representation,count=exact";
+            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             ensure2xx(response);
             return readList(response.getBody(), type);
@@ -223,6 +339,29 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> insert(String resource, Object payload, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource;
+        try {
+            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
+            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
+            String json = objectMapper.writeValueAsString(filtered);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String def = "return=representation,count=exact";
+            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, Class<T> type) {
         String url = config.getBaseUrl() + "/" + resource + builder.build();
         try {
@@ -244,6 +383,57 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        try {
+            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
+            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
+            String json = objectMapper.writeValueAsString(filtered);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String def = "return=representation,count=exact";
+            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> List<T> upsertMerge(String resource, Object payload, PgQueryBuilder builder, Class<T> type) {
+        PgPrefer prefer = PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates();
+        return insert(resource, payload, builder, prefer, type);
+    }
+
+    public <T> List<T> upsertMerge(String resource, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        PgPrefer p = prefer == null ? PgPrefer.create() : prefer;
+        if (p.toHeaderValue().isEmpty()) p = PgPrefer.create();
+        String h = PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates().toHeaderValue();
+        String hv = p.toHeaderValue();
+        PgPrefer finalPrefer = hv.isEmpty() ? PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates() : p;
+        return insert(resource, payload, builder, finalPrefer, type);
+    }
+
+    public <T> List<T> upsertIgnore(String resource, Object payload, PgQueryBuilder builder, Class<T> type) {
+        PgPrefer prefer = PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates();
+        return insert(resource, payload, builder, prefer, type);
+    }
+
+    public <T> List<T> upsertIgnore(String resource, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        PgPrefer p = prefer == null ? PgPrefer.create() : prefer;
+        if (p.toHeaderValue().isEmpty()) p = PgPrefer.create();
+        String h = PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates().toHeaderValue();
+        String hv = p.toHeaderValue();
+        PgPrefer finalPrefer = hv.isEmpty() ? PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates() : p;
+        return insert(resource, payload, builder, finalPrefer, type);
+    }
+
     public <T> T rpcForObject(String function, Object payload, Class<T> type) {
         String url = config.getBaseUrl() + "/rpc/" + function;
         try {
@@ -262,6 +452,25 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> T rpcForObject(String function, Object payload, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/rpc/" + function;
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            return objectMapper.readValue(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> T rpcForObject(String function, Object payload, PgQueryBuilder builder, Class<T> type) {
         String url = config.getBaseUrl() + "/rpc/" + function + builder.build();
         try {
@@ -275,6 +484,25 @@ public class PgRestClient {
         req.setBody(json);
         applyProfile(req, true);
         addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            return objectMapper.readValue(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> T rpcForObject(String function, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/rpc/" + function + builder.build();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
             HttpResponseData response = httpExecutor.execute(req);
             return objectMapper.readValue(response.getBody(), type);
         } catch (Exception e) { throw new RuntimeException(e); }
@@ -299,6 +527,26 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> rpcForList(String function, Object payload, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/rpc/" + function;
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> List<T> rpcForList(String function, Object payload, PgQueryBuilder builder, Class<T> type) {
         String url = config.getBaseUrl() + "/rpc/" + function + builder.build();
         try {
@@ -309,6 +557,26 @@ public class PgRestClient {
             req.getHeaders().put("Accept", "application/json");
             req.getHeaders().put("Content-Type", "application/json");
             req.getHeaders().put("Prefer", "count=exact");
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            ensure2xx(response);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public <T> List<T> rpcForList(String function, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/rpc/" + function + builder.build();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("POST");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
             req.setBody(json);
             applyProfile(req, true);
             addAuth(req);
@@ -336,6 +604,26 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("PATCH");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String def = "return=representation,count=exact";
+            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PayloadFieldFilter filter, Class<T> type) {
         String url = config.getBaseUrl() + "/" + resource + builder.build();
         try {
@@ -356,6 +644,28 @@ public class PgRestClient {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        try {
+            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
+            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
+            String json = objectMapper.writeValueAsString(filtered);
+            HttpRequestData req = new HttpRequestData();
+            req.setUrl(url);
+            req.setMethod("PATCH");
+            req.getHeaders().put("Accept", "application/json");
+            req.getHeaders().put("Content-Type", "application/json");
+            String def = "return=representation,count=exact";
+            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
+            req.getHeaders().put("Prefer", p);
+            req.setBody(json);
+            applyProfile(req, true);
+            addAuth(req);
+            HttpResponseData response = httpExecutor.execute(req);
+            return readList(response.getBody(), type);
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
     public int delete(String resource, PgQueryBuilder builder) {
         String url = config.getBaseUrl() + "/" + resource + builder.build();
         HttpRequestData req = new HttpRequestData();
@@ -363,6 +673,24 @@ public class PgRestClient {
         req.setMethod("DELETE");
         req.getHeaders().put("Accept", "application/json");
         req.getHeaders().put("Prefer", "count=exact");
+        applyProfile(req, true);
+        addAuth(req);
+        try {
+            HttpResponseData response = httpExecutor.execute(req);
+            String contentRange = getHeader(response.getHeaders(), "Content-Range", "items */0");
+            long total = parseTotal(contentRange);
+            return (int) total;
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public int delete(String resource, PgQueryBuilder builder, PgPrefer prefer) {
+        String url = config.getBaseUrl() + "/" + resource + builder.build();
+        HttpRequestData req = new HttpRequestData();
+        req.setUrl(url);
+        req.setMethod("DELETE");
+        req.getHeaders().put("Accept", "application/json");
+        String p = prefer == null ? "count=exact" : prefer.toHeaderValue().isEmpty() ? "count=exact" : prefer.toHeaderValue();
+        req.getHeaders().put("Prefer", p);
         applyProfile(req, true);
         addAuth(req);
         try {

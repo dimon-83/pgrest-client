@@ -115,6 +115,37 @@ List<UserVO> updated = pgRestClient.update("users", new PgQueryBuilder().eq("id"
 int deleted = pgRestClient.delete("users", new PgQueryBuilder().eq("id", 1));
 ```
 
+## Prefer Header 与 Upsert（0.1.12）
+- 新增 `PgPrefer` 构建器，支持 `handling/timezone/return/count/resolution/missing/max-affected/tx`，所有核心方法提供接收 `PgPrefer` 的重载。
+- 原生 Upsert：
+  - `upsertMerge(...)` 合并重复（`Prefer: resolution=merge-duplicates`）
+  - `upsertIgnore(...)` 忽略重复（`Prefer: resolution=ignore-duplicates`）
+  - 用 `PgFrom.onConflict(...)` 或 `PgQueryBuilder.raw("on_conflict", ...)` 指定冲突目标（主键或唯一约束/索引）。
+
+```java
+// 自定义 Prefer
+PgPrefer prefer = PgPrefer.create()
+    .handlingStrict()
+    .timezone("America/Los_Angeles")
+    .returnRepresentation()
+    .countExact();
+pgRestClient.insert("projects", Map.of("name","x"), prefer, Map.class);
+
+// Upsert：按唯一列合并
+pgRestClient.from("people")
+    .onConflict("email")
+    .prefer(PgPrefer.create().resolutionMergeDuplicates().returnRepresentation())
+    .insert(Map.of("email","a@b","name","Alice"), Map.class);
+
+// Upsert：忽略重复 + 缺失列用 DEFAULT
+pgRestClient.from("orders")
+    .onConflict("order_no")
+    .prefer(PgPrefer.create().resolutionIgnoreDuplicates().missingDefault())
+    .insert(Map.of("order_no","A1"), Map.class);
+```
+
+> 提示：指定列作为冲突目标时，需在数据库创建匹配的唯一约束或唯一索引，否则 upsert 会失败。
+
 ## QueryBuilder 能力
 - 选择列：`select("col1,col2")`
 - 条件：`eq/ne/gt/gte/lt/lte/like/ilike/in/isNull/notNull`
@@ -150,8 +181,21 @@ ResponseEntity<List<Map<String,Object>>> b = bDirect.list("users", Map.of("selec
 ```
 示例参考：
 - 配置：`examples/spring-boot-alicloud-crud/src/main/resources/application.yml:24`
-- 代码：`examples/spring-boot-alicloud-crud/src/main/java/io/github/dimon83/examples/bootcrud/PgRestDynamicFeignExampleController.java:22`
+  - 代码：`examples/spring-boot-alicloud-crud/src/main/java/io/github/dimon83/examples/bootcrud/PgRestDynamicFeignExampleController.java:22`
+
+### Feign Prefer 注入（0.1.12）
+- 可选提供 `PgPreferSupplier` Bean 覆盖默认 Prefer 值；未提供时默认 `count=exact`
+```java
+@Bean
+PgPreferSupplier preferSupplier() { return () -> "handling=strict,count=exact"; }
+```
 
 ## 备注
 - 核心库默认使用 JDK `HttpClient`；可选引入 OkHttp 适配在高并发/拦截器/WebSocket 场景增强控制
 - 已移除 Nacos 强绑定，若需要服务注册请使用单独扩展或在业务层实现
+
+## 代码覆盖率（JaCoCo）
+- 执行：`mvn clean verify`（会自动运行测试并生成覆盖率报告）
+- 单模块报告路径：`pgrest-client-*/target/site/jacoco/index.html`
+- 聚合报告路径：`target/site/jacoco-aggregate/index.html`
+- 可在父 POM 中调整阈值（当前不阻断构建，`LINE` 覆盖率最小值 `0.30`，可根据需要修改或启用严格检查）

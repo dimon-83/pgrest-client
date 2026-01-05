@@ -19,6 +19,7 @@ public class PgQueryBuilder {
     public PgQueryBuilder orderAsc(String column) { this.order = encode(column) + ".asc"; return this; }
     public PgQueryBuilder orderDesc(String column) { this.order = encode(column) + ".desc"; return this; }
     public PgQueryBuilder groupBy(String... columns) { if (columns == null || columns.length == 0) return this; StringJoiner j = new StringJoiner(","); for (String c : columns) j.add(c); this.group = encode(j.toString()); return this; }
+    public PgQueryBuilder columns(String... columns) { if (columns == null || columns.length == 0) return this; StringJoiner j = new StringJoiner(","); for (String c : columns) j.add(c); parts.add("columns=" + encode(j.toString())); return this; }
     public PgQueryBuilder eq(String column, Object value) { parts.add(encode(column) + "=eq." + encode(String.valueOf(value))); return this; }
     public PgQueryBuilder ne(String column, Object value) { parts.add(encode(column) + "=neq." + encode(String.valueOf(value))); return this; }
     public PgQueryBuilder gt(String column, Object value) { parts.add(encode(column) + "=gt." + encode(String.valueOf(value))); return this; }

@@ -19,6 +19,7 @@ public class PgRestClient {
     private volatile Supplier<String> authTokenSupplier;
     private volatile String readProfile;
     private volatile String writeProfile;
+    private final PayloadFieldFilter defaultFilter = new AnnotationPayloadFieldFilter();
 
     public PgRestClient(PgClientConfig config, HttpExecutor httpExecutor, ObjectMapper objectMapper) {
         this.config = config;
@@ -239,148 +240,31 @@ public class PgRestClient {
     public PgRestClient setProfile(String schema) { this.readProfile = schema; this.writeProfile = schema; return this; }
 
     public <T> List<T> insert(String resource, Object payload, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource;
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-        req.setMethod("POST");
-        req.getHeaders().put("Accept", "application/json");
-        req.getHeaders().put("Content-Type", "application/json");
-        req.getHeaders().put("Prefer", "return=representation,count=exact");
-        req.setBody(json);
-        applyProfile(req, true);
-        addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, new PgQueryBuilder(), defaultFilter, null, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PgPrefer prefer, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource;
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            String def = "return=representation,count=exact";
-            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
-            req.getHeaders().put("Prefer", p);
-            req.setBody(json);
-            applyProfile(req, true);
-            addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, new PgQueryBuilder(), defaultFilter, prefer, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource + builder.build();
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-        req.setMethod("POST");
-        req.getHeaders().put("Accept", "application/json");
-        req.getHeaders().put("Content-Type", "application/json");
-        req.getHeaders().put("Prefer", "return=representation,count=exact");
-        req.setBody(json);
-        applyProfile(req, true);
-        addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, builder, defaultFilter, null, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource + builder.build();
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            String def = "return=representation,count=exact";
-            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
-            req.getHeaders().put("Prefer", p);
-            req.setBody(json);
-            applyProfile(req, true);
-            addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, builder, defaultFilter, prefer, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PayloadFieldFilter filter, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource;
-        try {
-            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
-            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
-            String json = objectMapper.writeValueAsString(filtered);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-        req.setMethod("POST");
-        req.getHeaders().put("Accept", "application/json");
-        req.getHeaders().put("Content-Type", "application/json");
-        req.getHeaders().put("Prefer", "return=representation,count=exact");
-        req.setBody(json);
-        applyProfile(req, true);
-        addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, new PgQueryBuilder(), filter, null, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource;
-        try {
-            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
-            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
-            String json = objectMapper.writeValueAsString(filtered);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-            req.setMethod("POST");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            String def = "return=representation,count=exact";
-            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
-            req.getHeaders().put("Prefer", p);
-            req.setBody(json);
-            applyProfile(req, true);
-            addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, new PgQueryBuilder(), filter, prefer, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource + builder.build();
-        try {
-            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
-            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
-            String json = objectMapper.writeValueAsString(filtered);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-        req.setMethod("POST");
-        req.getHeaders().put("Accept", "application/json");
-        req.getHeaders().put("Content-Type", "application/json");
-        req.getHeaders().put("Prefer", "return=representation,count=exact");
-        req.setBody(json);
-        applyProfile(req, true);
-        addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            ensure2xx(response);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return insert(resource, payload, builder, filter, null, type);
     }
 
     public <T> List<T> insert(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
@@ -408,7 +292,7 @@ public class PgRestClient {
 
     public <T> List<T> upsertMerge(String resource, Object payload, PgQueryBuilder builder, Class<T> type) {
         PgPrefer prefer = PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates();
-        return insert(resource, payload, builder, prefer, type);
+        return insert(resource, payload, builder, defaultFilter, prefer, type);
     }
 
     public <T> List<T> upsertMerge(String resource, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
@@ -417,12 +301,26 @@ public class PgRestClient {
         String h = PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates().toHeaderValue();
         String hv = p.toHeaderValue();
         PgPrefer finalPrefer = hv.isEmpty() ? PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates() : p;
-        return insert(resource, payload, builder, finalPrefer, type);
+        return insert(resource, payload, builder, defaultFilter, finalPrefer, type);
+    }
+
+    public <T> List<T> upsertMerge(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, Class<T> type) {
+        PgPrefer prefer = PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates();
+        return insert(resource, payload, builder, filter, prefer, type);
+    }
+
+    public <T> List<T> upsertMerge(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
+        PgPrefer p = prefer == null ? PgPrefer.create() : prefer;
+        if (p.toHeaderValue().isEmpty()) p = PgPrefer.create();
+        String h = PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates().toHeaderValue();
+        String hv = p.toHeaderValue();
+        PgPrefer finalPrefer = hv.isEmpty() ? PgPrefer.create().returnRepresentation().countExact().resolutionMergeDuplicates() : p;
+        return insert(resource, payload, builder, filter, finalPrefer, type);
     }
 
     public <T> List<T> upsertIgnore(String resource, Object payload, PgQueryBuilder builder, Class<T> type) {
         PgPrefer prefer = PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates();
-        return insert(resource, payload, builder, prefer, type);
+        return insert(resource, payload, builder, defaultFilter, prefer, type);
     }
 
     public <T> List<T> upsertIgnore(String resource, Object payload, PgQueryBuilder builder, PgPrefer prefer, Class<T> type) {
@@ -431,7 +329,21 @@ public class PgRestClient {
         String h = PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates().toHeaderValue();
         String hv = p.toHeaderValue();
         PgPrefer finalPrefer = hv.isEmpty() ? PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates() : p;
-        return insert(resource, payload, builder, finalPrefer, type);
+        return insert(resource, payload, builder, defaultFilter, finalPrefer, type);
+    }
+
+    public <T> List<T> upsertIgnore(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, Class<T> type) {
+        PgPrefer prefer = PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates();
+        return insert(resource, payload, builder, filter, prefer, type);
+    }
+
+    public <T> List<T> upsertIgnore(String resource, Object payload, PgQueryBuilder builder, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
+        PgPrefer p = prefer == null ? PgPrefer.create() : prefer;
+        if (p.toHeaderValue().isEmpty()) p = PgPrefer.create();
+        String h = PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates().toHeaderValue();
+        String hv = p.toHeaderValue();
+        PgPrefer finalPrefer = hv.isEmpty() ? PgPrefer.create().returnRepresentation().countExact().resolutionIgnoreDuplicates() : p;
+        return insert(resource, payload, builder, filter, finalPrefer, type);
     }
 
     public <T> T rpcForObject(String function, Object payload, Class<T> type) {
@@ -587,61 +499,15 @@ public class PgRestClient {
     }
 
     public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource + builder.build();
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-        req.setMethod("PATCH");
-        req.getHeaders().put("Accept", "application/json");
-        req.getHeaders().put("Content-Type", "application/json");
-        req.getHeaders().put("Prefer", "return=representation,count=exact");
-        req.setBody(json);
-        applyProfile(req, true);
-        addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return update(resource, builder, payload, defaultFilter, null, type);
     }
 
     public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PgPrefer prefer, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource + builder.build();
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-            req.setMethod("PATCH");
-            req.getHeaders().put("Accept", "application/json");
-            req.getHeaders().put("Content-Type", "application/json");
-            String def = "return=representation,count=exact";
-            String p = prefer == null ? def : prefer.toHeaderValue().isEmpty() ? def : prefer.toHeaderValue();
-            req.getHeaders().put("Prefer", p);
-            req.setBody(json);
-            applyProfile(req, true);
-            addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return update(resource, builder, payload, defaultFilter, prefer, type);
     }
 
     public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PayloadFieldFilter filter, Class<T> type) {
-        String url = config.getBaseUrl() + "/" + resource + builder.build();
-        try {
-            Map<String,Object> map = payload instanceof Map ? (Map<String,Object>) payload : objectMapper.convertValue(payload, new TypeReference<Map<String,Object>>(){});
-            Map<String,Object> filtered = filter == null ? map : filter.apply(resource, payload, map);
-            String json = objectMapper.writeValueAsString(filtered);
-            HttpRequestData req = new HttpRequestData();
-            req.setUrl(url);
-        req.setMethod("PATCH");
-        req.getHeaders().put("Accept", "application/json");
-        req.getHeaders().put("Content-Type", "application/json");
-        req.getHeaders().put("Prefer", "return=representation,count=exact");
-        req.setBody(json);
-        applyProfile(req, true);
-        addAuth(req);
-            HttpResponseData response = httpExecutor.execute(req);
-            return readList(response.getBody(), type);
-        } catch (Exception e) { throw new RuntimeException(e); }
+        return update(resource, builder, payload, filter, null, type);
     }
 
     public <T> List<T> update(String resource, PgQueryBuilder builder, Object payload, PayloadFieldFilter filter, PgPrefer prefer, Class<T> type) {
